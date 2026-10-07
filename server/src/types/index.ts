@@ -104,6 +104,28 @@ export interface LoginDto {
 }
 
 /**
+ * Update Profile Payload DTO (Allowed editable fields for farmers)
+ */
+export interface UpdateProfileDto {
+  name?: string;
+  phone?: string;
+  district?: string;
+  state?: string;
+  landHolding?: number;
+  soilType?: string;
+  irrigationType?: string;
+}
+
+/**
+ * Profile Response Envelope
+ */
+export interface ProfileResponse {
+  success: boolean;
+  message?: string;
+  user: ISafeUser;
+}
+
+/**
  * Auth Result returned by services
  */
 export interface AuthResult {
