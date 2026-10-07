@@ -22,6 +22,9 @@ export interface IEnvConfig {
   logging: {
     format: string;
   };
+  weather: {
+    apiKey: string;
+  };
 }
 
 /**
@@ -152,6 +155,94 @@ export interface DashboardMetricsResponse {
   success: boolean;
   metrics: FarmMetric[];
   data?: FarmMetric[];
+}
+
+/**
+ * Spray suitability rating for agricultural applications
+ */
+export type SpraySuitability = 'Excellent' | 'Good' | 'Fair' | 'Poor';
+
+/**
+ * Hourly weather forecast data point
+ */
+export interface WeatherHour {
+  time: string;
+  temp: number;
+  condition: string;
+  icon: string;
+  pop: number; // Probability of precipitation (%)
+  windSpeed: number;
+}
+
+/**
+ * Daily 7-day weather forecast data point
+ */
+export interface WeatherDay {
+  date: string;
+  dayName: string;
+  maxTemp: number;
+  minTemp: number;
+  condition: string;
+  icon: string;
+  rainfallMm: number;
+  humidity: number;
+  spraySuitability: SpraySuitability;
+}
+
+/**
+ * Agricultural weather advisory item
+ */
+export interface AgriculturalAdvisory {
+  title: string;
+  level: 'Safe' | 'Caution' | 'Alert';
+  message: string;
+  irrigationRecommendation: string;
+  pestRiskLevel: 'Low' | 'Moderate' | 'High';
+}
+
+/**
+ * Complete Weather Intelligence entity
+ */
+export interface WeatherIntelligence {
+  location: string;
+  state?: string;
+  coordinates?: { lat: number; lng: number };
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  rainfallProbability: number;
+  soilTemperature: number;
+  evapotranspiration: number;
+  spraySuitability: SpraySuitability;
+  advisory: string;
+  forecast24h: WeatherHour[];
+  forecast7d: WeatherDay[];
+  current?: {
+    temp: number;
+    feelsLike: number;
+    condition: string;
+    description: string;
+    humidity: number;
+    windSpeed: number;
+    windDirection: string;
+    pressure: number;
+    uvIndex: number;
+    rainfallPast24h: number;
+    soilTemperature: number;
+    evapotranspiration: number;
+  };
+  agriculturalAdvisory?: AgriculturalAdvisory;
+  hourly?: WeatherHour[];
+  forecast?: WeatherDay[];
+}
+
+/**
+ * Weather API Response Envelope
+ */
+export interface WeatherResponse {
+  success: boolean;
+  weather: WeatherIntelligence;
+  data?: WeatherIntelligence;
 }
 
 /**

@@ -3,6 +3,7 @@ import healthRoutes from './healthRoutes';
 import authRoutes from './authRoutes';
 import userRoutes from './userRoutes';
 import dashboardRoutes from './dashboardRoutes';
+import weatherRoutes from './weatherRoutes';
 
 const router = Router();
 
@@ -17,6 +18,9 @@ router.use('/user', userRoutes);
 
 // Mount dashboard metrics routes
 router.use('/dashboard', dashboardRoutes);
+
+// Mount weather intelligence routes
+router.use('/weather', weatherRoutes);
 
 // Business routes will be mounted here in future steps:
 // router.use('/crops', cropRoutes);

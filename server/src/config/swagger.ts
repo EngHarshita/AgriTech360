@@ -114,6 +114,80 @@ const swaggerDefinition = {
           }
         }
       },
+      WeatherIntelligence: {
+        type: 'object',
+        required: [
+          'location',
+          'temperature',
+          'humidity',
+          'windSpeed',
+          'rainfallProbability',
+          'soilTemperature',
+          'evapotranspiration',
+          'spraySuitability',
+          'advisory',
+          'forecast24h',
+          'forecast7d'
+        ],
+        properties: {
+          location: { type: 'string', example: 'Nashik' },
+          state: { type: 'string', example: 'Maharashtra' },
+          temperature: { type: 'number', example: 29 },
+          humidity: { type: 'number', example: 62 },
+          windSpeed: { type: 'number', example: 12 },
+          rainfallProbability: { type: 'number', example: 18 },
+          soilTemperature: { type: 'number', example: 27 },
+          evapotranspiration: { type: 'number', example: 3.8 },
+          spraySuitability: {
+            type: 'string',
+            enum: ['Excellent', 'Good', 'Fair', 'Poor'],
+            example: 'Good'
+          },
+          advisory: {
+            type: 'string',
+            example: 'Suitable conditions for spraying pesticides and fertilizers.'
+          },
+          forecast24h: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                time: { type: 'string', example: '12:00' },
+                temp: { type: 'number', example: 31 },
+                condition: { type: 'string', example: 'Sunny' },
+                icon: { type: 'string', example: 'Sun' },
+                pop: { type: 'number', example: 15 },
+                windSpeed: { type: 'number', example: 12 }
+              }
+            }
+          },
+          forecast7d: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                date: { type: 'string', example: '2026-10-08' },
+                dayName: { type: 'string', example: 'Today' },
+                maxTemp: { type: 'number', example: 30 },
+                minTemp: { type: 'number', example: 21 },
+                condition: { type: 'string', example: 'Partly Cloudy' },
+                icon: { type: 'string', example: 'CloudSun' },
+                rainfallMm: { type: 'number', example: 0 },
+                humidity: { type: 'number', example: 62 },
+                spraySuitability: { type: 'string', example: 'Good' }
+              }
+            }
+          }
+        }
+      },
+      WeatherResponse: {
+        type: 'object',
+        required: ['success', 'weather'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          weather: { $ref: '#/components/schemas/WeatherIntelligence' }
+        }
+      },
       ErrorResponse: {
         type: 'object',
         properties: {

@@ -33,5 +33,8 @@ export const config: IEnvConfig = {
   },
   logging: {
     format: process.env.LOG_FORMAT || (nodeEnv === 'production' ? 'combined' : 'dev')
+  },
+  weather: {
+    apiKey: process.env.WEATHER_API_KEY || ''
   }
 };
