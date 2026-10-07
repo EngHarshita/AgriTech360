@@ -4,3 +4,4 @@ export * as userController from './userController';
 export * as dashboardController from './dashboardController';
 export * as weatherController from './weatherController';
 export * as mandiController from './mandiController';
+export * as schemesController from './schemesController';

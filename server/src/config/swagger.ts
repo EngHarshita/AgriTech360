@@ -262,6 +262,168 @@ const swaggerDefinition = {
           state: { type: 'string', example: 'Maharashtra' }
         }
       },
+      GovernmentScheme: {
+        type: 'object',
+        required: [
+          'id',
+          'title',
+          'description',
+          'category',
+          'benefits',
+          'eligibility',
+          'requiredDocuments',
+          'officialWebsite',
+          'applicationProcess',
+          'bookmarkCount'
+        ],
+        properties: {
+          id: { type: 'string', example: 'PM-KISAN' },
+          shortCode: { type: 'string', example: 'PM-KISAN' },
+          title: { type: 'string', example: 'Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)' },
+          category: {
+            type: 'string',
+            enum: [
+              'Financial Assistance',
+              'Crop Insurance',
+              'Irrigation & Machinery',
+              'Soil & Fertilizers',
+              'Organic Farming',
+              'Solar Energy',
+              'Credit & Loans',
+              'Infrastructure'
+            ],
+            example: 'Financial Assistance'
+          },
+          description: {
+            type: 'string',
+            example: 'Direct income support of ₹6,000 per year in three equal installments to all cultivable landholding farmer families.'
+          },
+          benefits: {
+            type: 'array',
+            items: { type: 'string' },
+            example: [
+              '₹6,000 annual direct cash transfer to bank account',
+              'Three equal installments of ₹2,000 every four months',
+              'Direct Benefit Transfer (DBT) directly into Aadhaar-linked accounts'
+            ]
+          },
+          eligibility: {
+            type: 'array',
+            items: { type: 'string' },
+            example: [
+              'Small and marginal landholding farmer families with cultivable land',
+              'Valid land ownership documents in revenue records'
+            ]
+          },
+          requiredDocuments: {
+            type: 'array',
+            items: { type: 'string' },
+            example: [
+              'Aadhaar Card',
+              'Land holding record (7/12 extract, RoR)',
+              'Active Bank Passbook linked with Aadhaar'
+            ]
+          },
+          officialWebsite: { type: 'string', example: 'https://pmkisan.gov.in' },
+          applicationProcess: {
+            type: 'array',
+            items: { type: 'string' },
+            example: [
+              'Visit official PM-KISAN portal or nearest CSC centre',
+              'Complete Farmer Registration with Aadhaar and Land record'
+            ]
+          },
+          bookmarkCount: { type: 'integer', example: 1420 },
+          isBookmarked: { type: 'boolean', example: false },
+          department: {
+            type: 'string',
+            example: 'Ministry of Agriculture and Farmers Welfare'
+          },
+          fundingType: {
+            type: 'string',
+            example: 'Central Sector Scheme (100% Central)'
+          },
+          targetBeneficiary: {
+            type: 'string',
+            example: 'All landholding farmers'
+          }
+        }
+      },
+      SchemesResponse: {
+        type: 'object',
+        required: ['success', 'schemes', 'pagination'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          schemes: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/GovernmentScheme' }
+          },
+          data: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/GovernmentScheme' }
+          },
+          pagination: {
+            type: 'object',
+            properties: {
+              page: { type: 'integer', example: 1 },
+              limit: { type: 'integer', example: 20 },
+              total: { type: 'integer', example: 26 },
+              totalPages: { type: 'integer', example: 2 },
+              hasNextPage: { type: 'boolean', example: true },
+              hasPrevPage: { type: 'boolean', example: false }
+            }
+          }
+        }
+      },
+      BookmarkResult: {
+        type: 'object',
+        required: ['success', 'isBookmarked', 'bookmarkCount'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          isBookmarked: { type: 'boolean', example: true },
+          bookmarkCount: { type: 'integer', example: 1421 },
+          schemeId: { type: 'string', example: 'PM-KISAN' },
+          message: {
+            type: 'string',
+            example: 'Scheme added to your saved bookmarks'
+          }
+        }
+      },
+      EligibilityCheckResult: {
+        type: 'object',
+        required: ['success', 'eligible', 'status', 'reasons'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          schemeId: { type: 'string', example: 'PM-KISAN' },
+          schemeTitle: {
+            type: 'string',
+            example: 'Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)'
+          },
+          eligible: { type: 'boolean', example: true },
+          status: {
+            type: 'string',
+            enum: ['eligible', 'not eligible'],
+            example: 'eligible'
+          },
+          reasons: {
+            type: 'array',
+            items: { type: 'string' },
+            example: [
+              'Applicable nationwide in all States and Union Territories (Farmer in Maharashtra)',
+              'Landholding of 4.5 acres meets standard landholding criteria'
+            ]
+          },
+          farmerProfile: {
+            type: 'object',
+            properties: {
+              state: { type: 'string', example: 'Maharashtra' },
+              landHolding: { type: 'number', example: 4.5 },
+              irrigationType: { type: 'string', example: 'Drip Irrigation' },
+              soilType: { type: 'string', example: 'Black Soil' }
+            }
+          }
+        }
+      },
       ErrorResponse: {
         type: 'object',
         properties: {

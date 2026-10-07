@@ -335,6 +335,126 @@ export interface MandiPricesResponse {
 }
 
 /**
+ * Permitted Government Scheme Categories
+ */
+export type SchemeCategory =
+  | 'Financial Assistance'
+  | 'Crop Insurance'
+  | 'Irrigation & Machinery'
+  | 'Soil & Fertilizers'
+  | 'Organic Farming'
+  | 'Solar Energy'
+  | 'Credit & Loans'
+  | 'Infrastructure'
+  | 'General Agriculture';
+
+/**
+ * Scheme Eligibility Rules criteria metadata
+ */
+export interface SchemeEligibilityRules {
+  targetStates?: string[];
+  minLandHolding?: number;
+  maxLandHolding?: number;
+  targetIrrigationTypes?: string[];
+  targetSoilTypes?: string[];
+}
+
+/**
+ * Government Scheme Model / DTO interface
+ */
+export interface IGovernmentScheme {
+  id?: string;
+  title: string;
+  shortCode?: string;
+  department?: string;
+  category: SchemeCategory;
+  subsidyAmount?: string;
+  targetBeneficiaries?: string;
+  description: string;
+  benefits: string[];
+  keyBenefits?: string[];
+  eligibility: string[];
+  eligibilityCriteria?: string[];
+  requiredDocuments: string[];
+  documentsRequired?: string[];
+  officialWebsite: string;
+  officialPortalUrl?: string;
+  applicationProcess: string;
+  deadline?: string;
+  status?: 'Open' | 'Upcoming' | 'Active Enrollment';
+  isPopular?: boolean;
+  bookmarkCount: number;
+  bookmarkedBy?: string[];
+  isBookmarked?: boolean;
+  eligibilityRules?: SchemeEligibilityRules;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Mongoose Document interface for GovernmentScheme
+ */
+export interface IGovernmentSchemeDocument extends Document, Omit<IGovernmentScheme, 'id'> {
+  toSafeObject(userId?: string): IGovernmentScheme;
+}
+
+/**
+ * Schemes query filter parameters
+ */
+export interface SchemeQueryParams {
+  category?: string;
+  search?: string;
+  q?: string;
+  page?: string | number;
+  limit?: string | number;
+}
+
+/**
+ * Scheme Eligibility Evaluation Output
+ */
+export interface EligibilityCheckResult {
+  schemeId: string;
+  schemeTitle: string;
+  shortCode?: string;
+  eligible: boolean;
+  status: 'eligible' | 'not eligible';
+  reasons: string[];
+  farmerProfile: {
+    state: string;
+    landHolding: number;
+    irrigationType: string;
+    soilType: string;
+  };
+}
+
+/**
+ * Bookmark toggle response
+ */
+export interface BookmarkResult {
+  success: boolean;
+  bookmarked: boolean;
+  bookmarkCount: number;
+  message: string;
+}
+
+/**
+ * Schemes API response envelope
+ */
+export interface SchemesResponse {
+  success: boolean;
+  schemes: IGovernmentScheme[];
+  data?: IGovernmentScheme[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+/**
  * Auth Result returned by services
  */
 export interface AuthResult {

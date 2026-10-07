@@ -5,6 +5,7 @@ import userRoutes from './userRoutes';
 import dashboardRoutes from './dashboardRoutes';
 import weatherRoutes from './weatherRoutes';
 import mandiRoutes from './mandiRoutes';
+import schemesRoutes from './schemesRoutes';
 
 const router = Router();
 
@@ -25,6 +26,9 @@ router.use('/weather', weatherRoutes);
 
 // Mount Mandi wholesale price routes
 router.use('/mandi', mandiRoutes);
+
+// Mount Government Schemes routes
+router.use('/schemes', schemesRoutes);
 
 // Business routes will be mounted here in future steps:
 // router.use('/crops', cropRoutes);
