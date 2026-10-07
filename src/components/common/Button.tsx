@@ -30,17 +30,17 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-emerald-600/20 hover:shadow-emerald-600/40',
+      'bg-[#0B6B53] text-white hover:bg-[#095B46] active:bg-[#073C2F] shadow-sm shadow-[#0B6B53]/25 hover:shadow-[#0B6B53]/40',
     secondary:
-      'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950 shadow-slate-900/20',
+      'bg-[#1B8F6B] text-white hover:bg-[#147657] active:bg-[#104B39] shadow-sm shadow-[#1B8F6B]/25',
     accent:
-      'bg-amber-500 text-slate-950 font-extrabold hover:bg-amber-400 active:bg-amber-600 shadow-amber-500/25',
+      'bg-[#F5B642] text-slate-950 font-extrabold hover:bg-[#EA9C1E] active:bg-[#C77914] shadow-sm shadow-[#F5B642]/30',
     outline:
-      'border-2 border-slate-300 text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100',
+      'border border-black/[0.1] text-slate-800 bg-white hover:bg-slate-50 hover:border-black/[0.18] active:bg-slate-100 shadow-soft',
     ghost:
-      'text-slate-700 bg-transparent hover:bg-slate-100/80 active:bg-slate-200/80 hover:text-slate-950',
+      'text-slate-700 bg-transparent hover:bg-black/[0.04] active:bg-black/[0.07] hover:text-slate-950',
     danger:
-      'bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 shadow-rose-600/20',
+      'bg-[#EF4444] text-white hover:bg-rose-600 active:bg-rose-700 shadow-rose-600/20',
   };
 
   return (

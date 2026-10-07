@@ -6,10 +6,13 @@ import {
   Save, 
   ShieldCheck, 
   Edit3,
-  Calendar,
-  Phone,
-  Mail,
-  UserCheck
+  Calendar, 
+  Phone, 
+  Mail, 
+  UserCheck,
+  CreditCard,
+  Layers,
+  Award
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -82,7 +85,7 @@ export const ProfileView: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="text-center py-20 text-slate-600 font-bold">
+      <div className="text-center py-20 text-slate-500 font-semibold text-sm">
         Please sign in to view and manage your farm profile.
       </div>
     );
@@ -91,15 +94,15 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.06]">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Farmer & Land Profile Management
+              Farmer & Land Profile
             </h1>
             <Badge variant="success" size="sm" dot>Kisan Agristack Verified</Badge>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
             Manage your registered land acreage, irrigation infrastructure, and soil classification records.
           </p>
         </div>
@@ -109,7 +112,7 @@ export const ProfileView: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleSwitchToDemo}
-            leftIcon={<UserCheck className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />}
+            leftIcon={<UserCheck className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />}
           >
             Reset Demo Farm
           </Button>
@@ -124,41 +127,57 @@ export const ProfileView: React.FC = () => {
         </div>
       </div>
 
-      {/* Profile Overview Card */}
-      <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-soft flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <img
-            src={user.avatar}
-            alt={`${user.name}'s profile avatar`}
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-600/40 shadow-md shadow-emerald-600/10 shrink-0"
-          />
+      {/* Farmer Identity Card */}
+      <div className="p-6 rounded-2xl bg-white border border-black/[0.06] shadow-soft flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-all hover:shadow-card">
+        <div className="flex items-center gap-5">
+          <div className="relative shrink-0">
+            <img
+              src={user.avatar}
+              alt={`${user.name}'s profile avatar`}
+              className="w-20 h-20 rounded-2xl object-cover border-2 border-[#0B6B53]/20 shadow-sm"
+            />
+            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#16A34A] border-2 border-white flex items-center justify-center text-white" title="Verified">
+              <Award className="w-3 h-3" />
+            </span>
+          </div>
+
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-black text-slate-900">{user.name}</h2>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">{user.name}</h2>
               <Badge variant="primary" size="sm">Active Farmer</Badge>
+              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                ID: AGR-MP-{user.location.pincode}
+              </span>
             </div>
-            <p className="text-xs text-slate-600 font-semibold mt-1 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
-              {user.location.village}, {user.location.district}, {user.location.state} - {user.location.pincode}
+
+            <p className="text-xs text-slate-500 font-medium mt-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[#0B6B53] shrink-0" aria-hidden="true" />
+              {user.location.village}, {user.location.district}, {user.location.state} • {user.location.pincode}
             </p>
-            <div className="flex flex-wrap items-center gap-4 mt-2 text-xs font-semibold text-slate-700">
+
+            <div className="flex flex-wrap items-center gap-4 mt-2.5 text-xs text-slate-600">
               <span className="flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" /> {user.phone}
+                <Phone className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" /> {user.phone}
               </span>
               <span className="flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" /> {user.email}
+                <Mail className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" /> {user.email}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" /> Member since {user.memberSince}
+              <span className="flex items-center gap-1.5 text-slate-500">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" /> Member since {user.memberSince}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row md:flex-col gap-2 w-full md:w-auto">
-          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center md:text-right">
-            <span className="text-[10px] font-black uppercase text-emerald-950 block">Kisan Credit Card (KCC)</span>
-            <span className="text-xs sm:text-sm font-black text-emerald-950 block">{user.farmDetails.kisanCreditCardNo || 'Registered'}</span>
+        <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-[#0B6B53]/[0.08] to-[#1B8F6B]/[0.04] border border-[#0B6B53]/15 text-left md:text-right">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block flex items-center md:justify-end gap-1">
+              <CreditCard className="w-3 h-3 text-[#0B6B53]" /> Kisan Credit Card (KCC)
+            </span>
+            <span className="text-sm font-black text-[#0B6B53] mt-0.5 block tracking-tight">
+              {user.farmDetails.kisanCreditCardNo || 'Registered (KCC-Active)'}
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 block">Credit Limit: ₹3,00,000 @ 4%</span>
           </div>
         </div>
       </div>
@@ -166,172 +185,190 @@ export const ProfileView: React.FC = () => {
       {/* Editable or Display View */}
       {isEditing ? (
         <form onSubmit={handleSave} className="space-y-6">
-          <Card className="border border-slate-200/90 shadow-soft">
+          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
             <CardHeader
               title="Edit Farm & Personal Information"
               subtitle="Keep your records updated for accurate AI recommendations"
-              icon={<Edit3 className="w-5 h-5 text-emerald-700" aria-hidden="true" />}
+              icon={<Edit3 className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
             />
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="farmer-name-input" className="block text-xs font-black text-slate-800 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    id="farmer-name-input"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-phone-input" className="block text-xs font-black text-slate-800 mb-1">
-                    Mobile Phone
-                  </label>
-                  <input
-                    id="farmer-phone-input"
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-email-input" className="block text-xs font-black text-slate-800 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    id="farmer-email-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div>
-                  <label htmlFor="farmer-village-input" className="block text-xs font-black text-slate-800 mb-1">
-                    Village / Tehsil
-                  </label>
-                  <input
-                    id="farmer-village-input"
-                    type="text"
-                    value={village}
-                    onChange={(e) => setVillage(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-district-input" className="block text-xs font-black text-slate-800 mb-1">
-                    District
-                  </label>
-                  <input
-                    id="farmer-district-input"
-                    type="text"
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-state-input" className="block text-xs font-black text-slate-800 mb-1">
-                    State
-                  </label>
-                  <input
-                    id="farmer-state-input"
-                    type="text"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-pin-input" className="block text-xs font-black text-slate-800 mb-1">
-                    PIN Code
-                  </label>
-                  <input
-                    id="farmer-pin-input"
-                    type="text"
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
+            <CardContent className="p-6 space-y-5">
+              {/* Personal Details */}
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-[#0B6B53]" /> Personal Details
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="farmer-name-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      id="farmer-name-input"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-phone-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Mobile Phone
+                    </label>
+                    <input
+                      id="farmer-phone-input"
+                      type="text"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-email-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Email Address
+                    </label>
+                    <input
+                      id="farmer-email-input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2 border-t border-slate-200">
-                <div>
-                  <label htmlFor="farmer-acres-input" className="block text-xs font-black text-slate-800 mb-1">
-                    Total Land (Acres)
-                  </label>
-                  <input
-                    id="farmer-acres-input"
-                    type="number"
-                    step="0.1"
-                    value={acres}
-                    onChange={(e) => setAcres(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="farmer-soil-select" className="block text-xs font-black text-slate-800 mb-1">
-                    Soil Classification
-                  </label>
-                  <select
-                    id="farmer-soil-select"
-                    value={soilType}
-                    onChange={(e) => setSoilType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
-                  >
-                    <option value="Black">Black Soil (काली मिट्टी)</option>
-                    <option value="Alluvial">Alluvial Soil (जलोढ़)</option>
-                    <option value="Red">Red Soil (लाल)</option>
-                    <option value="Loamy">Loamy Soil (दोमट)</option>
-                    <option value="Sandy Loam">Sandy Loam (बलुई दोमट)</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="farmer-irrigation-select" className="block text-xs font-black text-slate-800 mb-1">
-                    Irrigation System
-                  </label>
-                  <select
-                    id="farmer-irrigation-select"
-                    value={irrigationType}
-                    onChange={(e) => setIrrigationType(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
-                  >
-                    <option value="Drip">Drip Irrigation (ड्रिप)</option>
-                    <option value="Canal">Canal Irrigation (नहर)</option>
-                    <option value="Borewell">Borewell (नलकूप)</option>
-                    <option value="Sprinkler">Sprinkler (फव्वारा)</option>
-                    <option value="Rainfed">Rainfed (वर्षा आधारित)</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="farmer-kcc-input" className="block text-xs font-black text-slate-800 mb-1">
-                    KCC Number
-                  </label>
-                  <input
-                    id="farmer-kcc-input"
-                    type="text"
-                    value={kcc}
-                    onChange={(e) => setKcc(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
+              {/* Geographic Location */}
+              <div className="pt-4 border-t border-black/[0.06]">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#0B6B53]" /> Farm Location
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label htmlFor="farmer-village-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Village / Tehsil
+                    </label>
+                    <input
+                      id="farmer-village-input"
+                      type="text"
+                      value={village}
+                      onChange={(e) => setVillage(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-district-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      District
+                    </label>
+                    <input
+                      id="farmer-district-input"
+                      type="text"
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-state-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      State
+                    </label>
+                    <input
+                      id="farmer-state-input"
+                      type="text"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-pin-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      PIN Code
+                    </label>
+                    <input
+                      id="farmer-pin-input"
+                      type="text"
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3">
+              {/* Farm Land & Agronomic Configuration */}
+              <div className="pt-4 border-t border-black/[0.06]">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-[#0B6B53]" /> Land & Infrastructure
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label htmlFor="farmer-acres-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Total Land (Acres)
+                    </label>
+                    <input
+                      id="farmer-acres-input"
+                      type="number"
+                      step="0.1"
+                      value={acres}
+                      onChange={(e) => setAcres(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-soil-select" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Soil Classification
+                    </label>
+                    <select
+                      id="farmer-soil-select"
+                      value={soilType}
+                      onChange={(e) => setSoilType(e.target.value as any)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    >
+                      <option value="Black">Black Soil (काली मिट्टी)</option>
+                      <option value="Alluvial">Alluvial Soil (जलोढ़)</option>
+                      <option value="Red">Red Soil (लाल)</option>
+                      <option value="Loamy">Loamy Soil (दोमट)</option>
+                      <option value="Sandy Loam">Sandy Loam (बलुई दोमट)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-irrigation-select" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Irrigation System
+                    </label>
+                    <select
+                      id="farmer-irrigation-select"
+                      value={irrigationType}
+                      onChange={(e) => setIrrigationType(e.target.value as any)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    >
+                      <option value="Drip">Drip Irrigation (ड्रिप)</option>
+                      <option value="Canal">Canal Irrigation (नहर)</option>
+                      <option value="Borewell">Borewell (नलकूप)</option>
+                      <option value="Sprinkler">Sprinkler (फव्वारा)</option>
+                      <option value="Rainfed">Rainfed (वर्षा आधारित)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="farmer-kcc-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      KCC Number
+                    </label>
+                    <input
+                      id="farmer-kcc-input"
+                      type="text"
+                      value={kcc}
+                      onChange={(e) => setKcc(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-black/[0.06]">
                 <Button
                   type="button"
                   variant="outline"
@@ -353,86 +390,90 @@ export const ProfileView: React.FC = () => {
           </Card>
         </form>
       ) : (
+        /* Land Statistics & Farm Information Section */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Land Holding */}
-          <Card className="border border-slate-200/90 shadow-soft">
+          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
             <CardHeader
               title="Registered Farm Land"
               subtitle="Agricultural Survey Parcel"
-              icon={<Sprout className="w-5 h-5 text-emerald-700" aria-hidden="true" />}
+              icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
             />
             <CardContent className="p-5 space-y-3">
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">{user.farmDetails.totalAcres}</span>
+                <span className="text-3xl font-black text-slate-900 tracking-tight">{user.farmDetails.totalAcres}</span>
                 <span className="text-sm font-bold text-slate-500">Total Acres</span>
               </div>
-              <p className="text-xs text-slate-600 font-medium">
-                Registered under PM-KISAN Portal and Madhya Pradesh Bhulekh Portal.
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Registered under PM-KISAN Portal and State Bhulekh Digital Land Records.
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-2">
                 <Badge variant="success" size="sm">Title Clean & Freehold</Badge>
+                <span className="text-[11px] font-semibold text-slate-400">Parcel #142/3</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Card 2: Soil Classification */}
-          <Card className="border border-slate-200/90 shadow-soft">
+          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
             <CardHeader
               title="Soil Classification"
               subtitle="Regur / Deep Black Soil"
-              icon={<ShieldCheck className="w-5 h-5 text-amber-700" aria-hidden="true" />}
+              icon={<ShieldCheck className="w-5 h-5 text-[#F5B642]" aria-hidden="true" />}
             />
             <CardContent className="p-5 space-y-3">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900">{user.farmDetails.soilType} Soil</span>
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.soilType} Soil</span>
               </div>
-              <p className="text-xs text-slate-600 font-medium">
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
                 High clay content, excellent moisture retention. Optimal for Soybean, Cotton, and Sharbati Wheat.
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-2">
                 <Badge variant="accent" size="sm">Soil Card Valid (2026)</Badge>
+                <span className="text-[11px] font-semibold text-slate-400">pH 7.2 Balanced</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Card 3: Irrigation System */}
-          <Card className="border border-slate-200/90 shadow-soft">
+          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
             <CardHeader
               title="Irrigation Infrastructure"
               subtitle="Water Source & Delivery"
-              icon={<Droplet className="w-5 h-5 text-sky-700" aria-hidden="true" />}
+              icon={<Droplet className="w-5 h-5 text-sky-600" aria-hidden="true" />}
             />
             <CardContent className="p-5 space-y-3">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900">{user.farmDetails.irrigationType}</span>
-                <span className="text-xs text-emerald-800 font-bold">+ Borewell</span>
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.irrigationType}</span>
+                <span className="text-xs text-[#0B6B53] font-bold">+ Borewell</span>
               </div>
-              <p className="text-xs text-slate-600 font-medium">
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
                 Micro-irrigation enabled with PMKSY subsidy. Delivers high water efficiency (90%+).
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-2">
                 <Badge variant="info" size="sm">70% Water Saved</Badge>
+                <span className="text-[11px] font-semibold text-slate-400">Solar Pump Tied</span>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Primary Crops Cultivated */}
-      <Card className="border border-slate-200/90 shadow-soft">
+      {/* Primary Crops Cultivated Section */}
+      <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
         <CardHeader
           title="Primary Crop Rotation Cycle"
           subtitle="Registered Cultivars for 2026 Season"
-          icon={<Sprout className="w-5 h-5 text-emerald-700" aria-hidden="true" />}
+          icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
         />
         <CardContent className="p-5">
           <div className="flex flex-wrap gap-2.5">
             {user.farmDetails.primaryCrops.map((crop, idx) => (
               <div
                 key={idx}
-                className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-black text-slate-900 flex items-center gap-2 shadow-2xs"
+                className="px-4 py-2 rounded-xl bg-[#F5F7F6] border border-black/[0.06] text-xs font-bold text-slate-800 flex items-center gap-2 shadow-2xs hover:border-[#0B6B53]/30 transition-all"
               >
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" aria-hidden="true" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0B6B53]" aria-hidden="true" />
                 {crop}
               </div>
             ))}
@@ -442,3 +483,4 @@ export const ProfileView: React.FC = () => {
     </div>
   );
 };
+
