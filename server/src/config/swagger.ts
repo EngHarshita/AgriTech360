@@ -188,6 +188,80 @@ const swaggerDefinition = {
           weather: { $ref: '#/components/schemas/WeatherIntelligence' }
         }
       },
+      MandiPrice: {
+        type: 'object',
+        required: [
+          'commodity',
+          'market',
+          'state',
+          'modalPrice',
+          'minPrice',
+          'maxPrice',
+          'msp',
+          'lastUpdated'
+        ],
+        properties: {
+          id: { type: 'string', example: '67045b85a36df1e29c8e9499' },
+          commodity: { type: 'string', example: 'Wheat' },
+          hindiName: { type: 'string', example: 'गेहूं (Gehun)' },
+          variety: { type: 'string', example: 'Sharbati (Lokwan)' },
+          market: { type: 'string', example: 'Nashik APMC' },
+          district: { type: 'string', example: 'Nashik' },
+          state: { type: 'string', example: 'Maharashtra' },
+          modalPrice: { type: 'number', example: 2850 },
+          minPrice: { type: 'number', example: 2700 },
+          maxPrice: { type: 'number', example: 2950 },
+          msp: { type: 'number', example: 2425 },
+          priceChange: { type: 'number', example: 2.4 },
+          volumeTradedTons: { type: 'number', example: 380 },
+          trend: { type: 'string', enum: ['up', 'down', 'stable'], example: 'up' },
+          category: {
+            type: 'string',
+            enum: ['Grains', 'Pulses', 'Oilseeds', 'Commercial', 'Spices', 'Vegetables', 'Fruits'],
+            example: 'Grains'
+          },
+          lastUpdated: { type: 'string', example: '2026-10-08' },
+          mspDifference: { type: 'number', example: 425 },
+          isAboveMsp: { type: 'boolean', example: true }
+        }
+      },
+      MandiPricesResponse: {
+        type: 'object',
+        required: ['success', 'prices', 'pagination'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          prices: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/MandiPrice' }
+          },
+          pagination: {
+            type: 'object',
+            properties: {
+              page: { type: 'integer', example: 1 },
+              limit: { type: 'integer', example: 20 },
+              total: { type: 'integer', example: 54 },
+              totalPages: { type: 'integer', example: 3 },
+              hasNextPage: { type: 'boolean', example: true },
+              hasPrevPage: { type: 'boolean', example: false }
+            }
+          }
+        }
+      },
+      RevenueEstimationResult: {
+        type: 'object',
+        properties: {
+          commodity: { type: 'string', example: 'Wheat' },
+          quantityQtl: { type: 'number', example: 50 },
+          modalPricePerQtl: { type: 'number', example: 2850 },
+          estimatedGrossRevenue: { type: 'number', example: 142500 },
+          mspPerQtl: { type: 'number', example: 2425 },
+          mspGrossRevenue: { type: 'number', example: 121250 },
+          netGainOverMsp: { type: 'number', example: 21250 },
+          market: { type: 'string', example: 'Nashik APMC' },
+          district: { type: 'string', example: 'Nashik' },
+          state: { type: 'string', example: 'Maharashtra' }
+        }
+      },
       ErrorResponse: {
         type: 'object',
         properties: {

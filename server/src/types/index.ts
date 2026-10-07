@@ -246,6 +246,95 @@ export interface WeatherResponse {
 }
 
 /**
+ * Permitted Mandi Agricultural Commodity Categories
+ */
+export type MandiCategory =
+  | 'Grains'
+  | 'Pulses'
+  | 'Oilseeds'
+  | 'Commercial'
+  | 'Spices'
+  | 'Vegetables'
+  | 'Fruits';
+
+/**
+ * Mandi Price Item interface
+ */
+export interface IMandiPrice {
+  id?: string;
+  commodity: string;
+  hindiName?: string;
+  variety: string;
+  market: string;
+  district: string;
+  state: string;
+  modalPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  msp: number;
+  priceChange: number;
+  volumeTradedTons: number;
+  trend: 'up' | 'down' | 'stable';
+  category: MandiCategory;
+  lastUpdated: string;
+  mspDifference?: number;
+  isAboveMsp?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Mongoose Document interface for MandiPrice
+ */
+export interface IMandiPriceDocument extends Document, Omit<IMandiPrice, 'id'> {
+  toSafeObject(): IMandiPrice;
+}
+
+/**
+ * Query filter parameters for Mandi prices
+ */
+export interface MandiPriceQueryParams {
+  q?: string;
+  category?: string;
+  state?: string;
+  page?: string | number;
+  limit?: string | number;
+}
+
+/**
+ * Revenue estimation calculation result
+ */
+export interface RevenueEstimationResult {
+  commodity: string;
+  quantityQtl: number;
+  modalPricePerQtl: number;
+  estimatedGrossRevenue: number;
+  mspPerQtl: number;
+  mspGrossRevenue: number;
+  netGainOverMsp: number;
+  market: string;
+  district: string;
+  state: string;
+}
+
+/**
+ * Mandi Prices API Response envelope
+ */
+export interface MandiPricesResponse {
+  success: boolean;
+  prices: IMandiPrice[];
+  data?: IMandiPrice[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+/**
  * Auth Result returned by services
  */
 export interface AuthResult {
