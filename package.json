@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server:dev": "npm --prefix server run dev",
+    "server:build": "npm --prefix server run build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
