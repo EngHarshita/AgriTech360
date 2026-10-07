@@ -126,6 +126,35 @@ export interface ProfileResponse {
 }
 
 /**
+ * Trend direction for farm analytics metrics
+ */
+export type MetricTrend = 'up' | 'down' | 'stable';
+
+/**
+ * Farm Metric item interface for dashboard analytics
+ */
+export interface FarmMetric {
+  id?: string;
+  title: string;
+  value: number;
+  unit: string;
+  trend: MetricTrend;
+  change?: string;
+  isPositive?: boolean;
+  description?: string;
+  iconName?: string;
+}
+
+/**
+ * Dashboard Metrics API response payload
+ */
+export interface DashboardMetricsResponse {
+  success: boolean;
+  metrics: FarmMetric[];
+  data?: FarmMetric[];
+}
+
+/**
  * Auth Result returned by services
  */
 export interface AuthResult {

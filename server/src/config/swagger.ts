@@ -7,7 +7,7 @@ const swaggerDefinition = {
     title: 'AgriTech360 API Documentation',
     version: '1.0.0',
     description:
-      'Production-ready backend API documentation for AgriTech360 smart farming platform, covering Authentication, Farmer Profiles, and Telemetry.',
+      'Production-ready backend API documentation for AgriTech360 smart farming platform, covering Authentication, Farmer Profiles, and Dashboard Telemetry.',
     contact: {
       name: 'AgriTech360 Engineering Team',
       email: 'support@agritech360.com'
@@ -79,6 +79,39 @@ const swaggerDefinition = {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Profile updated successfully' },
           user: { $ref: '#/components/schemas/SafeUser' }
+        }
+      },
+      FarmMetric: {
+        type: 'object',
+        required: ['title', 'value', 'unit', 'trend'],
+        properties: {
+          id: { type: 'string', example: 'total-land' },
+          title: { type: 'string', example: 'Total Land' },
+          value: { type: 'number', example: 6.5 },
+          unit: { type: 'string', example: 'Acres' },
+          trend: {
+            type: 'string',
+            enum: ['up', 'down', 'stable'],
+            example: 'up'
+          },
+          change: { type: 'string', example: '+0.5 Acres vs last season' },
+          isPositive: { type: 'boolean', example: true },
+          description: {
+            type: 'string',
+            example: 'Registered arable farmland in Nashik, Maharashtra'
+          },
+          iconName: { type: 'string', example: 'ShieldCheck' }
+        }
+      },
+      DashboardMetricsResponse: {
+        type: 'object',
+        required: ['success', 'metrics'],
+        properties: {
+          success: { type: 'boolean', example: true },
+          metrics: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/FarmMetric' }
+          }
         }
       },
       ErrorResponse: {
