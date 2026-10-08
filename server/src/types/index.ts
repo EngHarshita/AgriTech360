@@ -542,3 +542,7 @@ export interface HealthCheckData {
     name?: string;
   };
 }
+
+// Farm & Field Parcel Management Module
+export * from './farmTypes';
+

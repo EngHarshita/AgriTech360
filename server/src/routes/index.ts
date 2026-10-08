@@ -6,6 +6,7 @@ import dashboardRoutes from './dashboardRoutes';
 import weatherRoutes from './weatherRoutes';
 import mandiRoutes from './mandiRoutes';
 import schemesRoutes from './schemesRoutes';
+import farmRoutes from './farmRoutes';
 
 const router = Router();
 
@@ -30,9 +31,12 @@ router.use('/mandi', mandiRoutes);
 // Mount Government Schemes routes
 router.use('/schemes', schemesRoutes);
 
+// Mount Farm & Field Parcel Management routes
+router.use('/farms', farmRoutes);
+
 // Business routes will be mounted here in future steps:
 // router.use('/crops', cropRoutes);
-// router.use('/farms', farmRoutes);
 // router.use('/sensors', sensorRoutes);
 
 export default router;
+

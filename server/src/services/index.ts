@@ -4,3 +4,5 @@ export * as dashboardService from './dashboardService';
 export * as weatherService from './weatherService';
 export * as mandiService from './mandiService';
 export * as schemesService from './schemesService';
+export * as farmService from './farmService';
+
