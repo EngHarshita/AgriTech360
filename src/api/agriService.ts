@@ -139,8 +139,29 @@ export const agriService = {
     }
 
     const query = category && category !== 'All' ? `?category=${encodeURIComponent(category)}` : '';
-    const res = await apiClient.get<{ data?: GovernmentScheme[] } | GovernmentScheme[]>(`/schemes${query}`);
-    return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as GovernmentScheme[]);
+    const res = await apiClient.get<{ data?: GovernmentScheme[]; schemes?: GovernmentScheme[] } | GovernmentScheme[]>(`/schemes${query}`);
+    if (Array.isArray(res.data)) return res.data;
+    if (res.data && 'data' in res.data && Array.isArray(res.data.data)) return res.data.data;
+    if (res.data && 'schemes' in res.data && Array.isArray(res.data.schemes)) return res.data.schemes;
+    return [];
+  },
+
+  async getSchemeById(id: string): Promise<GovernmentScheme | null> {
+    const res = await apiClient.get<{ scheme?: GovernmentScheme; data?: GovernmentScheme } | GovernmentScheme>(`/schemes/${encodeURIComponent(id)}`);
+    if ('id' in res.data) return res.data as GovernmentScheme;
+    if (res.data && 'scheme' in res.data) return res.data.scheme!;
+    if (res.data && 'data' in res.data) return res.data.data!;
+    return null;
+  },
+
+  async toggleBookmarkScheme(id: string): Promise<{ success: boolean; isBookmarked: boolean; bookmarkCount: number }> {
+    const res = await apiClient.post<{ success: boolean; isBookmarked: boolean; bookmarkCount: number }>(`/schemes/${encodeURIComponent(id)}/bookmark`);
+    return res.data;
+  },
+
+  async checkSchemeEligibility(id: string): Promise<{ eligible: boolean; status: string; reasons: string[] }> {
+    const res = await apiClient.post<{ eligible: boolean; status: string; reasons: string[] }>(`/schemes/${encodeURIComponent(id)}/check-eligibility`);
+    return res.data;
   },
 
   // 7. Farm Alerts & Advisories Module
