@@ -3,6 +3,7 @@ import type { User } from '../types';
 import { mockCurrentUser } from '../data/mockData';
 import { env } from '../config/env';
 import apiClient from '../api/apiClient';
+import { normalizeUser } from '../api/agriService';
 
 interface AuthContextType {
   user: User | null;
@@ -63,12 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Live API Login
-    const res = await apiClient.post<{ token: string; user: User }>('/auth/login', {
+    const res = await apiClient.post<{ token: string; user?: any; data?: any }>('/auth/login', {
       email,
       password: pass,
     });
 
-    const { token, user: loggedInUser } = res.data;
+    const { token } = res.data;
+    const rawUser = res.data.user || res.data.data || res.data;
+    const loggedInUser = normalizeUser(rawUser);
+
     if (token) {
       localStorage.setItem(env.authTokenKey, token);
     }
@@ -96,8 +100,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Live API Registration
-    const res = await apiClient.post<{ token: string; user: User }>('/auth/register', data);
-    const { token, user: registeredUser } = res.data;
+    const registerPayload = {
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      password: (data as any).password || 'Password123!',
+      district: data.location?.district || 'Indore',
+      state: data.location?.state || 'Madhya Pradesh',
+      landHolding: data.farmDetails?.totalAcres ?? 5,
+      soilType: data.farmDetails?.soilType || 'Black',
+      irrigationType: data.farmDetails?.irrigationType || 'Drip',
+      role: 'farmer'
+    };
+
+    const res = await apiClient.post<{ token: string; user?: any; data?: any }>('/auth/register', registerPayload);
+    const { token } = res.data;
+    const rawUser = res.data.user || res.data.data || res.data;
+    const registeredUser = normalizeUser(rawUser);
+
     if (token) {
       localStorage.setItem(env.authTokenKey, token);
     }

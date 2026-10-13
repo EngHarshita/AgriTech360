@@ -12,12 +12,12 @@ export interface User {
   };
   farmDetails: {
     totalAcres: number;
-    soilType: 'Alluvial' | 'Black' | 'Red' | 'Laterite' | 'Loamy' | 'Sandy Loam';
-    irrigationType: 'Drip' | 'Canal' | 'Borewell' | 'Rainfed' | 'Sprinkler';
+    soilType: 'Alluvial' | 'Black' | 'Red' | 'Laterite' | 'Loamy' | 'Sandy Loam' | string;
+    irrigationType: 'Drip' | 'Canal' | 'Borewell' | 'Rainfed' | 'Sprinkler' | string;
     primaryCrops: string[];
     kisanCreditCardNo?: string;
   };
-  memberSince: string;
+  memberSince?: string;
 }
 
 export interface SoilParams {

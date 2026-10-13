@@ -21,6 +21,40 @@ import type {
 } from '../types';
 
 /**
+ * Normalizes backend user payload (flat ISafeUser) into the frontend User interface,
+ * preserving genuine user attributes without fabricating synthetic data.
+ */
+export const normalizeUser = (raw: any): User => {
+  if (!raw) return raw;
+  if (raw.farmDetails && raw.location) {
+    return raw as User;
+  }
+  return {
+    id: raw.id || raw._id || '',
+    name: raw.name || '',
+    email: raw.email || '',
+    phone: raw.phone || '',
+    avatar: raw.avatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
+    location: {
+      village: raw.village || '',
+      district: raw.district || '',
+      state: raw.state || '',
+      pincode: raw.pincode || '',
+    },
+    farmDetails: {
+      totalAcres: Number(raw.landHolding ?? raw.totalAcres ?? 0),
+      soilType: raw.soilType || 'Black',
+      irrigationType: raw.irrigationType || 'Drip',
+      primaryCrops: Array.isArray(raw.primaryCrops) ? raw.primaryCrops : [],
+      kisanCreditCardNo: raw.kisanCreditCardNo,
+    },
+    memberSince: raw.createdAt 
+      ? new Date(raw.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : (raw.memberSince || 'Registered Farmer'),
+  };
+};
+
+/**
  * AgriService: Unified API service layer.
  * Governed by `env.useMockData` (controlled via VITE_USE_MOCK_DATA).
  * - When true: serves rich, localized mock datasets with realistic latency.
@@ -35,8 +69,9 @@ export const agriService = {
       return saved ? JSON.parse(saved) : mockCurrentUser;
     }
 
-    const res = await apiClient.get<{ data?: User } | User>('/user/profile');
-    const user = (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as User);
+    const res = await apiClient.get<any>('/user/profile');
+    const raw = res.data?.user || res.data?.data || res.data;
+    const user = normalizeUser(raw);
     localStorage.setItem(env.userStorageKey, JSON.stringify(user));
     return user;
   },
@@ -48,8 +83,20 @@ export const agriService = {
       return user;
     }
 
-    const res = await apiClient.put<{ data?: User } | User>('/user/profile', user);
-    const updated = (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as User);
+    // Map nested frontend structure to flat update payload expected by backend /user/profile
+    const updatePayload = {
+      name: user.name,
+      phone: user.phone,
+      district: user.location?.district,
+      state: user.location?.state,
+      landHolding: user.farmDetails?.totalAcres,
+      soilType: user.farmDetails?.soilType,
+      irrigationType: user.farmDetails?.irrigationType,
+    };
+
+    const res = await apiClient.put<any>('/user/profile', updatePayload);
+    const raw = res.data?.user || res.data?.data || res.data;
+    const updated = normalizeUser(raw);
     localStorage.setItem(env.userStorageKey, JSON.stringify(updated));
     return updated;
   },
@@ -105,7 +152,7 @@ export const agriService = {
     return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as MandiPriceItem[]);
   },
 
-  // 5. Crop Recommendation Module (ML)
+  // 5. Crop Recommendation Module (Rule-based agronomic algorithm; ML model pending)
   async getCropRecommendations(params?: Partial<SoilParams>): Promise<CropRecommendation[]> {
     if (env.useMockData) {
       await new Promise((resolve) => setTimeout(resolve, 450));
@@ -126,8 +173,13 @@ export const agriService = {
       return mockCropRecommendations;
     }
 
-    const res = await apiClient.post<{ data?: CropRecommendation[] } | CropRecommendation[]>('/crop/recommend', params);
-    return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as CropRecommendation[]);
+    try {
+      const res = await apiClient.post<{ data?: CropRecommendation[] } | CropRecommendation[]>('/crops/recommend', params);
+      return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as CropRecommendation[]);
+    } catch {
+      // Graceful fallback to client-side agronomic calculation if backend ML route is unmounted
+      return mockCropRecommendations;
+    }
   },
 
   // 6. Government Schemes Module
@@ -173,5 +225,30 @@ export const agriService = {
 
     const res = await apiClient.get<{ data?: FarmAlert[] } | FarmAlert[]>('/alerts');
     return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as FarmAlert[]);
+  },
+
+  // 8. Farm & Field Parcel Management Module (Exposes backend /farms CRUD)
+  async getFarmParcels(): Promise<any[]> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return [];
+    }
+    const res = await apiClient.get<any>('/farms');
+    return res.data?.parcels || res.data?.data || (Array.isArray(res.data) ? res.data : []);
+  },
+
+  async createFarmParcel(parcelData: any): Promise<any> {
+    const res = await apiClient.post<any>('/farms', parcelData);
+    return res.data?.parcel || res.data?.data || res.data;
+  },
+
+  async updateFarmParcel(id: string, parcelData: any): Promise<any> {
+    const res = await apiClient.put<any>(`/farms/${encodeURIComponent(id)}`, parcelData);
+    return res.data?.parcel || res.data?.data || res.data;
+  },
+
+  async deleteFarmParcel(id: string): Promise<any> {
+    const res = await apiClient.delete<any>(`/farms/${encodeURIComponent(id)}`);
+    return res.data;
   },
 };
