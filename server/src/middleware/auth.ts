@@ -29,7 +29,7 @@ export const authenticateJWT = (
     req.user = decoded;
     return next();
   } catch (error) {
-    return next(error);
+    return next(ApiError.unauthorized('Invalid or malformed authentication token'));
   }
 };
 
@@ -50,4 +50,35 @@ export const authorizeRoles = (...roles: Array<JWTPayload['role']>) => {
 
     return next();
   };
+};
+
+/**
+ * Middleware for optional JWT authentication.
+ * Attaches decoded user payload if valid Bearer token is provided,
+ * but allows unauthenticated requests to proceed.
+ */
+export const optionalAuthenticateJWT = (
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwt.secret) as JWTPayload;
+    req.user = decoded;
+  } catch {
+    // Token is invalid/expired; continue gracefully without throwing
+  }
+
+  return next();
 };

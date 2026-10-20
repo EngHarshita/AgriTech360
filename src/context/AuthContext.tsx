@@ -100,10 +100,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Live API Registration
+    const cleanPhone = (data.phone || '').replace(/[^0-9]/g, '').slice(-10) || `${Date.now()}`.slice(-6);
+    const generatedEmail = data.email || (data.name
+      ? `${data.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.${cleanPhone}@agritech360.in`
+      : `farmer.${cleanPhone}@agritech360.in`);
+
     const registerPayload = {
-      name: data.name || '',
-      email: data.email || '',
-      phone: data.phone || '',
+      name: data.name || 'Registered Farmer',
+      email: generatedEmail,
+      phone: data.phone || '+91 94251 12345',
       password: (data as any).password || 'Password123!',
       district: data.location?.district || 'Indore',
       state: data.location?.state || 'Madhya Pradesh',

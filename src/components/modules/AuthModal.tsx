@@ -49,44 +49,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleDemoLogin = async () => {
     setLoading(true);
-    await login(mockCurrentUser.email, 'demo');
-    setLoading(false);
-    showToast('Signed in as Rajesh Sharma (Indore, 12.5 Acres)', 'success');
-    onClose();
+    try {
+      await login(mockCurrentUser.email, 'demo');
+      showToast('Signed in as Rajesh Sharma (Indore, 12.5 Acres)', 'success');
+      onClose();
+    } catch (err: any) {
+      showToast(err?.message || 'Demo sign-in failed. Please verify credentials or register a new farmer account.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await login(loginEmail, password);
-    setLoading(false);
-    showToast('Signed in successfully to AgriTech360', 'success');
-    onClose();
+    try {
+      await login(loginEmail, password);
+      showToast('Signed in successfully to AgriTech360', 'success');
+      onClose();
+    } catch (err: any) {
+      showToast(err?.message || 'Invalid credentials. Please verify your email and password.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await register({
-      name: name || 'Suresh Patel',
-      phone: phone || '+91 94251 12345',
-      location: {
-        village: village || 'Dharampuri',
-        district: district || 'Dhar',
-        state: state || 'Madhya Pradesh',
-        pincode: '454001',
-      },
-      farmDetails: {
-        totalAcres: parseFloat(acres) || 4.5,
-        soilType,
-        irrigationType: 'Drip',
-        primaryCrops: ['Wheat', 'Soybean'],
-        kisanCreditCardNo: 'KCC-MP-NEW-01',
-      },
-    });
-    setLoading(false);
-    showToast('New farmer profile registered successfully!', 'success');
-    onClose();
+    try {
+      await register({
+        name: name || 'Suresh Patel',
+        phone: phone || '+91 94251 12345',
+        location: {
+          village: village || 'Dharampuri',
+          district: district || 'Dhar',
+          state: state || 'Madhya Pradesh',
+          pincode: '454001',
+        },
+        farmDetails: {
+          totalAcres: parseFloat(acres) || 4.5,
+          soilType,
+          irrigationType: 'Drip',
+          primaryCrops: ['Wheat', 'Soybean'],
+          kisanCreditCardNo: 'KCC-MP-NEW-01',
+        },
+      });
+      showToast('New farmer profile registered successfully!', 'success');
+      onClose();
+    } catch (err: any) {
+      showToast(err?.message || 'Registration failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

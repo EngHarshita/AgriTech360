@@ -25,6 +25,10 @@ export interface IEnvConfig {
   weather: {
     apiKey: string;
   };
+  mlService: {
+    url: string;
+    timeoutMs: number;
+  };
 }
 
 /**
@@ -545,4 +549,101 @@ export interface HealthCheckData {
 
 // Farm & Field Parcel Management Module
 export * from './farmTypes';
+
+/**
+ * Crop Recommendation Input parameters supporting standard and alias names
+ */
+export interface CropRecommendationInput {
+  N?: number;
+  P?: number;
+  K?: number;
+  nitrogen?: number;
+  phosphorus?: number;
+  potassium?: number;
+  temperature: number;
+  humidity?: number;
+  moisture?: number;
+  ph?: number;
+  phLevel?: number;
+  rainfall: number;
+  soilType?: string;
+}
+
+/**
+ * Normalized Crop Input features strictly ordered for ML inference
+ */
+export interface NormalizedCropInput {
+  N: number;
+  P: number;
+  K: number;
+  temperature: number;
+  humidity: number;
+  ph: number;
+  rainfall: number;
+  soilType?: string;
+}
+
+/**
+ * Individual Crop Recommendation conforming to frontend CropRecommendation interface
+ */
+export interface CropRecommendationItem {
+  id: string;
+  cropName: string;
+  hindiName?: string;
+  category: 'Cereal' | 'Pulse' | 'Cash Crop' | 'Horticulture' | 'Oilseed' | 'Vegetable' | string;
+  suitabilityScore: number;
+  season: 'Kharif' | 'Rabi' | 'Zaid' | string;
+  expectedYield: string;
+  estimatedRevenuePerAcre: number;
+  costOfCultivationPerAcre: number;
+  netProfitPerAcre: number;
+  waterRequirement: 'Low' | 'Medium' | 'High' | string;
+  durationDays: number;
+  matchReasons: string[];
+  climateRisk: 'Low' | 'Moderate' | 'High' | string;
+  bestSowingWindow: string;
+  recommendedFertilizers: Array<{
+    name: string;
+    dosage: string;
+  }>;
+  imageUrl?: string;
+}
+
+/**
+ * Crop Recommendation Response structure
+ */
+export interface CropRecommendationResponse {
+  success: boolean;
+  message: string;
+  crop: string;
+  confidence: number;
+  recommendation: CropRecommendationItem;
+  data: CropRecommendationItem[];
+  input_features: Record<string, number>;
+}
+
+/**
+ * Farm Alert & Advisory entity for real-time notifications
+ */
+export interface FarmAlert {
+  id: string;
+  title: string;
+  category: 'weather' | 'pest' | 'price' | 'scheme' | 'system';
+  type: 'danger' | 'warning' | 'info' | 'success';
+  message: string;
+  timestamp: string;
+  read: boolean;
+  actionUrl?: string;
+  sourceType: 'live_telemetry' | 'simulated_fallback' | 'official_advisory';
+}
+
+/**
+ * Alerts API response envelope
+ */
+export interface AlertsResponse {
+  success: boolean;
+  count: number;
+  data: FarmAlert[];
+}
+
 

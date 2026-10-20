@@ -246,9 +246,9 @@ export const getWeatherForLocation = async (location: string): Promise<WeatherIn
 
   const apiKey = config.weather.apiKey;
 
-  // 2. If OpenWeatherMap API key is missing, return localized agronomical fallback
-  if (!apiKey || apiKey.trim().length === 0) {
-    logger.info(`OpenWeatherMap API key not configured; using localized fallback for [${location}]`);
+  // 2. If OpenWeatherMap API key is missing or placeholder, return localized agronomical fallback
+  if (!apiKey || apiKey.trim().length === 0 || apiKey.includes('your_openweathermap') || apiKey.includes('placeholder')) {
+    logger.info(`OpenWeatherMap API key not configured or placeholder; using localized fallback for [${location}]`);
     const fallbackData = getFallbackWeatherData(location);
     weatherCache.set(normalizedKey, {
       data: fallbackData,

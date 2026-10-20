@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { FarmAlert } from '../types';
 import { mockAlerts } from '../data/mockData';
+import { agriService } from '../api/agriService';
 
 interface AgriContextType {
   alerts: FarmAlert[];
@@ -18,6 +19,22 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [alerts, setAlerts] = useState<FarmAlert[]>(mockAlerts);
   const [savedSchemeIds, setSavedSchemeIds] = useState<string[]>(['sch_pm_kisan', 'sch_pmksy']);
   const [currentSelectedLocation, setCurrentSelectedLocation] = useState<string>('Indore, Madhya Pradesh');
+
+  useEffect(() => {
+    let mounted = true;
+    agriService.getAlerts()
+      .then((data) => {
+        if (mounted && Array.isArray(data) && data.length > 0) {
+          setAlerts(data);
+        }
+      })
+      .catch(() => {
+        // Retain fallback alerts on network/offline failure
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const toggleSaveScheme = (schemeId: string) => {
     setSavedSchemeIds((prev) =>

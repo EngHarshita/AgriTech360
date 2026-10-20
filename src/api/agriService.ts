@@ -146,6 +146,7 @@ export const agriService = {
     const params = new URLSearchParams();
     if (search) params.append('q', search);
     if (category && category !== 'All') params.append('category', category);
+    params.append('limit', '100');
     const queryString = params.toString() ? `?${params.toString()}` : '';
 
     const res = await apiClient.get<{ data?: MandiPriceItem[] } | MandiPriceItem[]>(`/mandi${queryString}`);
@@ -173,13 +174,13 @@ export const agriService = {
       return mockCropRecommendations;
     }
 
-    try {
-      const res = await apiClient.post<{ data?: CropRecommendation[] } | CropRecommendation[]>('/crops/recommend', params);
-      return (res.data && 'data' in res.data && res.data.data) ? res.data.data : (res.data as CropRecommendation[]);
-    } catch {
-      // Graceful fallback to client-side agronomic calculation if backend ML route is unmounted
-      return mockCropRecommendations;
+    const res = await apiClient.post<any>('/crops/recommend', params);
+    if (res.data) {
+      if (Array.isArray(res.data.data)) return res.data.data;
+      if (Array.isArray(res.data.recommendations)) return res.data.recommendations;
+      if (Array.isArray(res.data)) return res.data;
     }
+    return [];
   },
 
   // 6. Government Schemes Module
@@ -190,8 +191,12 @@ export const agriService = {
       return mockGovernmentSchemes.filter((s) => s.category === category);
     }
 
-    const query = category && category !== 'All' ? `?category=${encodeURIComponent(category)}` : '';
-    const res = await apiClient.get<{ data?: GovernmentScheme[]; schemes?: GovernmentScheme[] } | GovernmentScheme[]>(`/schemes${query}`);
+    const params = new URLSearchParams();
+    if (category && category !== 'All') params.append('category', category);
+    params.append('limit', '100');
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    const res = await apiClient.get<{ data?: GovernmentScheme[]; schemes?: GovernmentScheme[] } | GovernmentScheme[]>(`/schemes${queryString}`);
     if (Array.isArray(res.data)) return res.data;
     if (res.data && 'data' in res.data && Array.isArray(res.data.data)) return res.data.data;
     if (res.data && 'schemes' in res.data && Array.isArray(res.data.schemes)) return res.data.schemes;

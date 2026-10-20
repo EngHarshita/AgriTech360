@@ -12,7 +12,11 @@ const startServer = async (): Promise<void> => {
   try {
     // 1. Establish MongoDB Atlas connection
     logger.info('Initializing MongoDB Atlas connection...');
-    await connectDB();
+    try {
+      await connectDB();
+    } catch (dbError) {
+      logger.error('Initial MongoDB connection failed. Running in degraded mode while reconnecting in background:', dbError);
+    }
 
     // 2. Start HTTP server
     server = app.listen(config.port, () => {

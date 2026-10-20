@@ -8,6 +8,7 @@
     "build": "rimraf dist && tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/tests/api.test.ts",
     "seed:mandi": "tsx src/scripts/seedMandiPrices.ts",
     "seed:schemes": "tsx src/scripts/seedSchemes.ts"
   },

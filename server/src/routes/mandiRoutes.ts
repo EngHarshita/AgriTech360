@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPrices, estimateRevenue, seedPrices } from '../controllers/mandiController';
-import { authenticateJWT } from '../middleware';
+import { authenticateJWT, optionalAuthenticateJWT } from '../middleware';
 
 const router = Router();
 
@@ -60,7 +60,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticateJWT, getPrices);
+router.get('/', optionalAuthenticateJWT, getPrices);
 
 /**
  * @openapi
@@ -100,7 +100,7 @@ router.get('/', authenticateJWT, getPrices);
  *       401:
  *         description: Unauthorized
  */
-router.get('/estimate', authenticateJWT, estimateRevenue);
+router.get('/estimate', optionalAuthenticateJWT, estimateRevenue);
 
 /**
  * @openapi

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getWeather } from '../controllers/weatherController';
-import { authenticateJWT } from '../middleware';
+import { optionalAuthenticateJWT } from '../middleware';
 
 const router = Router();
 
@@ -30,12 +30,12 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/WeatherResponse'
  *       401:
- *         description: Unauthorized - missing or invalid JWT Bearer token
+ *         description: Unauthorized - invalid JWT Bearer token
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticateJWT, getWeather);
+router.get('/', optionalAuthenticateJWT, getWeather);
 
 export default router;

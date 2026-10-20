@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { dashboardService } from '../services';
 import { asyncHandler } from '../utils/asyncHandler';
-import { ApiError } from '../utils/apiError';
 import { AuthenticatedRequest, DashboardMetricsResponse } from '../types';
 
 /**
@@ -10,11 +9,8 @@ import { AuthenticatedRequest, DashboardMetricsResponse } from '../types';
  */
 export const getMetrics = asyncHandler(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    if (!req.user?.userId) {
-      throw ApiError.unauthorized('Authentication required to access dashboard metrics');
-    }
-
-    const metrics = await dashboardService.getFarmerMetrics(req.user.userId);
+    const userId = req.user?.userId;
+    const metrics = await dashboardService.getFarmerMetrics(userId);
 
     const responsePayload: DashboardMetricsResponse = {
       success: true,

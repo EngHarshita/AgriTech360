@@ -2,8 +2,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { IEnvConfig } from '../types';
 
-// Load .env file from root of server package
+// Load .env file from server package root or current working directory
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'server', '.env') });
 
 const nodeEnv = (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test';
 
@@ -36,5 +38,9 @@ export const config: IEnvConfig = {
   },
   weather: {
     apiKey: process.env.WEATHER_API_KEY || ''
+  },
+  mlService: {
+    url: process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000',
+    timeoutMs: parseInt(process.env.ML_SERVICE_TIMEOUT_MS || '8000', 10)
   }
 };

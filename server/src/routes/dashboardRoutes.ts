@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getMetrics } from '../controllers/dashboardController';
-import { authenticateJWT } from '../middleware';
+import { optionalAuthenticateJWT } from '../middleware';
 
 const router = Router();
 
@@ -34,6 +34,6 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/metrics', authenticateJWT, getMetrics);
+router.get('/metrics', optionalAuthenticateJWT, getMetrics);
 
 export default router;

@@ -18,7 +18,8 @@ export const getProfile = asyncHandler(
 
     res.status(200).json({
       success: true,
-      user
+      user,
+      data: user
     });
   }
 );
@@ -41,7 +42,8 @@ export const updateProfile = asyncHandler(
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user
+      user,
+      data: user
     });
   }
 );

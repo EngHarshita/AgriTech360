@@ -6,7 +6,7 @@ import {
   checkEligibility,
   seedSchemes
 } from '../controllers/schemesController';
-import { authenticateJWT } from '../middleware';
+import { authenticateJWT, optionalAuthenticateJWT } from '../middleware';
 
 const router = Router();
 
@@ -56,7 +56,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticateJWT, getSchemes);
+router.get('/', optionalAuthenticateJWT, getSchemes);
 
 /**
  * @openapi
@@ -104,7 +104,7 @@ router.post('/seed', authenticateJWT, seedSchemes);
  *       404:
  *         description: Scheme not found
  */
-router.get('/:id', authenticateJWT, getSchemeById);
+router.get('/:id', optionalAuthenticateJWT, getSchemeById);
 
 /**
  * @openapi
