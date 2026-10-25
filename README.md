@@ -3,6 +3,7 @@
 > **Final Year B.Tech Capstone Project**  
 > **Domain**: Artificial Intelligence, Smart Agriculture, and Fullstack Web Systems  
 > **Team**: Harshita (Frontend Lead) • Divyanshi (Backend Lead) • Khushi (Database & Testing) • Pragati (ML & Research)
+> https://agritech360.vercel.app/
 
 ---
 
