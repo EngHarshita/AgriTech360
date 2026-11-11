@@ -11,6 +11,7 @@ import schemesRoutes from './schemesRoutes';
 import farmRoutes from './farmRoutes';
 import cropRoutes from './cropRoutes';
 import alertRoutes from './alertRoutes';
+import adminRoutes from './adminRoutes';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.get('/', (_req: Request, res: Response) => {
     documentation: `${config.apiPrefix}/docs`,
     health: `${config.apiPrefix}/health`,
     endpoints: {
+      admin: `${config.apiPrefix}/admin`,
       alerts: `${config.apiPrefix}/alerts`,
       auth: `${config.apiPrefix}/auth`,
       crops: `${config.apiPrefix}/crops`,
@@ -65,6 +67,9 @@ router.use('/crop', cropRoutes); // Alias for singular path compatibility
 
 // Mount Farm Alerts & Advisories routes
 router.use('/alerts', alertRoutes);
+
+// Mount Admin Control Panel routes (strict admin role restriction)
+router.use('/admin', adminRoutes);
 
 
 // Business routes will be mounted here in future steps:

@@ -46,23 +46,38 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
     },
     landHolding: {
       type: Number,
-      required: [true, 'Land holding size is required'],
+      default: 0,
       min: [0, 'Land holding must be a non-negative number']
     },
     soilType: {
       type: String,
-      required: [true, 'Soil type is required'],
-      trim: true
+      trim: true,
+      default: ''
     },
     irrigationType: {
       type: String,
-      required: [true, 'Irrigation type is required'],
-      trim: true
+      trim: true,
+      default: ''
+    },
+    businessName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    businessType: {
+      type: String,
+      trim: true,
+      default: ''
     },
     role: {
       type: String,
       enum: ['farmer', 'expert', 'buyer', 'admin'] as UserRole[],
       default: 'farmer'
+    },
+    status: {
+      type: String,
+      enum: ['active', 'suspended'],
+      default: 'active'
     }
   },
   {
@@ -112,7 +127,10 @@ userSchema.methods.toSafeObject = function (): ISafeUser {
     landHolding: this.landHolding,
     soilType: this.soilType,
     irrigationType: this.irrigationType,
+    businessName: this.businessName,
+    businessType: this.businessType,
     role: this.role,
+    status: (this as any).status || 'active',
     createdAt: this.createdAt,
     updatedAt: this.updatedAt
   };

@@ -5,7 +5,11 @@ import type {
   GovernmentScheme, 
   CropRecommendation, 
   FarmAlert,
-  FarmMetric
+  FarmMetric,
+  FarmParcel,
+  AdminOverview,
+  AuditLogEntry,
+  SystemHealthData
 } from '../types';
 
 export const mockCurrentUser: User = {
@@ -14,6 +18,7 @@ export const mockCurrentUser: User = {
   email: 'rajesh.sharma@agritech360.in',
   phone: '+91 98765 43210',
   avatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
+  role: 'farmer',
   location: {
     village: 'Pipariya Kalan',
     district: 'Indore',
@@ -28,6 +33,26 @@ export const mockCurrentUser: User = {
     kisanCreditCardNo: 'KCC-MP-492019-X',
   },
   memberSince: 'March 2023',
+};
+
+export const mockCurrentBuyer: User = {
+  id: 'usr_buyer_9921',
+  name: 'Anita Agarwal',
+  email: 'anita.agarwal@agrocorp.in',
+  phone: '+91 98111 22334',
+  avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+  role: 'buyer',
+  businessDetails: {
+    businessName: 'AgroCorp Commodities Ltd',
+    businessType: 'Wholesaler / Processor',
+  },
+  location: {
+    village: 'MIDC Industrial Area',
+    district: 'Indore',
+    state: 'Madhya Pradesh',
+    pincode: '452015',
+  },
+  memberSince: 'January 2024',
 };
 
 export const mockDashboardMetrics: FarmMetric[] = [
@@ -591,3 +616,223 @@ export const mockAlerts: FarmAlert[] = [
     actionUrl: '/weather',
   },
 ];
+
+export const mockFarmParcels: FarmParcel[] = [
+  {
+    id: 'parcel_01',
+    farmerId: 'usr_88921',
+    name: 'North Canal Field (Survey #142)',
+    surveyNumber: 'Khasra #142/3',
+    village: 'Pipariya Kalan',
+    district: 'Indore',
+    state: 'Madhya Pradesh',
+    areaAcres: 7.5,
+    soilType: 'Deep Black Soil',
+    irrigationType: 'Drip Irrigation',
+    currentCrop: 'Soybean (JS-335)',
+    croppingSeason: 'Kharif 2026',
+    status: 'Active Cultivation',
+    coordinates: { lat: 22.7196, lng: 75.8577 },
+    createdAt: '2026-06-15T09:30:00.000Z',
+  },
+  {
+    id: 'parcel_02',
+    farmerId: 'usr_88921',
+    name: 'Wellside Orchard & Grain Plot',
+    surveyNumber: 'Khasra #218/1',
+    village: 'Pipariya Kalan',
+    district: 'Indore',
+    state: 'Madhya Pradesh',
+    areaAcres: 5.0,
+    soilType: 'Medium Black Soil',
+    irrigationType: 'Sprinkler System',
+    currentCrop: 'Sharbati Wheat',
+    croppingSeason: 'Rabi 2026',
+    status: 'Sowing Prep',
+    coordinates: { lat: 22.7245, lng: 75.8612 },
+    createdAt: '2026-07-20T11:15:00.000Z',
+  },
+];
+
+export const mockCurrentAdmin: User = {
+  id: 'usr_admin_001',
+  name: 'Devraj Chauhan',
+  email: 'admin@agritech360.internal',
+  phone: '+91 99999 00000',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  role: 'admin',
+  status: 'active',
+  location: {
+    village: 'Central Secretariat',
+    district: 'New Delhi',
+    state: 'Delhi',
+    pincode: '110001',
+  },
+  memberSince: 'January 2022',
+};
+
+export const mockUsersList: User[] = [
+  mockCurrentUser,
+  {
+    id: 'usr_88922',
+    name: 'Ramesh Patel',
+    email: 'ramesh.farmer@example.com',
+    phone: '+91 98765 11223',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    role: 'farmer',
+    status: 'active',
+    location: {
+      village: 'Sanwer Kalan',
+      district: 'Indore',
+      state: 'Madhya Pradesh',
+      pincode: '453551',
+    },
+    farmDetails: {
+      totalAcres: 8.0,
+      soilType: 'Medium Black',
+      irrigationType: 'Borewell',
+      primaryCrops: ['Soybean', 'Mustard'],
+    },
+    memberSince: 'April 2024',
+  },
+  mockCurrentBuyer,
+  {
+    id: 'usr_88922',
+    name: 'Vikramaditya Farms',
+    email: 'vikram.farms@krishimail.in',
+    phone: '+91 98222 33445',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    role: 'farmer',
+    status: 'suspended',
+    farmDetails: {
+      totalAcres: 24.0,
+      soilType: 'Black',
+      irrigationType: 'Borewell',
+      primaryCrops: ['Soybean', 'Mustard'],
+    },
+    location: {
+      village: 'Gram Sonkatch',
+      district: 'Dewas',
+      state: 'Madhya Pradesh',
+      pincode: '455001',
+    },
+    memberSince: 'February 2023',
+  },
+  {
+    id: 'usr_88923',
+    name: 'Sunita Yadav',
+    email: 'sunita.yadav@krishimail.in',
+    phone: '+91 97555 44332',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    role: 'farmer',
+    status: 'active',
+    location: {
+      village: 'Manglia',
+      district: 'Indore',
+      state: 'Madhya Pradesh',
+      pincode: '453771',
+    },
+    farmDetails: {
+      totalAcres: 15.2,
+      soilType: 'Deep Black',
+      irrigationType: 'Canal',
+      primaryCrops: ['Cotton', 'Wheat', 'Chickpea'],
+    },
+    memberSince: 'May 2024',
+  },
+  mockCurrentAdmin,
+];
+
+export const mockAdminOverview: AdminOverview = {
+  totalUsers: 142,
+  totalFarmers: 140,
+  totalBuyers: 0,
+  totalAdmins: 2,
+  activeUsers: 139,
+  suspendedUsers: 3,
+  totalParcels: 312,
+  activeCultivationParcels: 284,
+  totalLandAcres: 1845.5,
+  totalSchemes: 16,
+  totalMandiRecords: 48,
+  databaseStatus: 'connected',
+  systemUptimeSeconds: 86400,
+  nodeVersion: 'v22.10.0',
+  memoryUsageMb: 84,
+};
+
+export const mockAuditLogs: AuditLogEntry[] = [
+  {
+    id: 'log_001',
+    action: 'USER_SUSPENDED',
+    performedBy: 'usr_admin_001',
+    performedByEmail: 'admin@agritech360.internal',
+    targetId: 'usr_88922',
+    targetType: 'User',
+    details: {
+      targetEmail: 'vikram.farms@krishimail.in',
+      reason: 'Unverified land title survey numbers requiring re-inspection',
+      previousStatus: 'active',
+      newStatus: 'suspended',
+    },
+    ipAddress: '127.0.0.1',
+    timestamp: '2026-10-29T10:15:00.000Z',
+  },
+  {
+    id: 'log_002',
+    action: 'USER_RESTORED',
+    performedBy: 'usr_admin_001',
+    performedByEmail: 'admin@agritech360.internal',
+    targetId: 'usr_88923',
+    targetType: 'User',
+    details: {
+      targetEmail: 'sunita.yadav@krishimail.in',
+      reason: 'Land revenue documents and Kisan Credit Card identity verified',
+      previousStatus: 'suspended',
+      newStatus: 'active',
+    },
+    ipAddress: '127.0.0.1',
+    timestamp: '2026-10-28T14:30:00.000Z',
+  },
+  {
+    id: 'log_003',
+    action: 'SYSTEM_CONFIG_VERIFIED',
+    performedBy: 'usr_admin_001',
+    performedByEmail: 'admin@agritech360.internal',
+    details: {
+      subsystems: ['MongoDB Atlas', 'OpenWeather Agro-Met', 'Agmarknet API', 'FastAPI ML Engine'],
+      status: 'All subsystems verified',
+    },
+    ipAddress: '127.0.0.1',
+    timestamp: '2026-10-28T09:00:00.000Z',
+  },
+];
+
+export const mockSystemHealth: SystemHealthData = {
+  status: 'healthy',
+  uptimeSeconds: 86400,
+  timestamp: new Date().toISOString(),
+  database: {
+    state: 'connected',
+    host: 'mongodb://127.0.0.1:27017',
+    name: 'agritech360',
+  },
+  system: {
+    nodeVersion: 'v22.10.0',
+    platform: 'win32',
+    arch: 'x64',
+    pid: 14208,
+    memory: {
+      heapUsedMb: 78,
+      heapTotalMb: 120,
+      rssMb: 145,
+    },
+  },
+  microservices: {
+    weatherStation: 'operational',
+    mandiAggregator: 'operational',
+    cropInferenceEngine: 'standby',
+  },
+};
+
+

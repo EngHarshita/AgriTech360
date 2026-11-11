@@ -10,20 +10,18 @@ let server: Server;
  */
 const startServer = async (): Promise<void> => {
   try {
-    // 1. Establish MongoDB Atlas connection
-    logger.info('Initializing MongoDB Atlas connection...');
-    try {
-      await connectDB();
-    } catch (dbError) {
-      logger.error('Initial MongoDB connection failed. Running in degraded mode while reconnecting in background:', dbError);
-    }
-
-    // 2. Start HTTP server
+    // 1. Start HTTP server immediately
     server = app.listen(config.port, () => {
       logger.info(`AgriTech360 backend is running in [${config.env}] mode`);
       logger.info(`Server URL: http://localhost:${config.port}`);
       logger.info(`Health check: http://localhost:${config.port}/health`);
       logger.info(`API Base URL: http://localhost:${config.port}${config.apiPrefix}`);
+    });
+
+    // 2. Establish MongoDB Atlas connection in background without blocking server binding
+    logger.info('Initializing MongoDB Atlas connection...');
+    connectDB().catch((dbError) => {
+      logger.error('Initial MongoDB connection failed. Running in degraded mode while reconnecting in background:', dbError);
     });
   } catch (error) {
     logger.error('Critical failure during server startup:', error);

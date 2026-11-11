@@ -1,16 +1,24 @@
+export type UserRole = 'farmer' | 'buyer' | 'admin' | 'expert';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
   avatar: string;
+  role?: UserRole;
+  status?: 'active' | 'suspended';
+  businessDetails?: {
+    businessName: string;
+    businessType: string;
+  };
   location: {
     village: string;
     district: string;
     state: string;
     pincode: string;
   };
-  farmDetails: {
+  farmDetails?: {
     totalAcres: number;
     soilType: 'Alluvial' | 'Black' | 'Red' | 'Laterite' | 'Loamy' | 'Sandy Loam' | string;
     irrigationType: 'Drip' | 'Canal' | 'Borewell' | 'Rainfed' | 'Sprinkler' | string;
@@ -162,3 +170,109 @@ export interface FarmMetric {
   description: string;
   iconName: string;
 }
+
+export type FarmParcelStatus = 'Active Cultivation' | 'Fallow' | 'Harvested' | 'Sowing Prep';
+
+export interface FarmParcel {
+  id: string;
+  farmerId: string;
+  name: string;
+  surveyNumber?: string;
+  village?: string;
+  district: string;
+  state: string;
+  areaAcres: number;
+  soilType?: string;
+  irrigationType?: string;
+  currentCrop?: string;
+  croppingSeason?: string;
+  status: FarmParcelStatus;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateFarmParcelDto {
+  name: string;
+  surveyNumber?: string;
+  village?: string;
+  district?: string;
+  state?: string;
+  areaAcres: number;
+  soilType?: string;
+  irrigationType?: string;
+  currentCrop?: string;
+  croppingSeason?: string;
+  status?: FarmParcelStatus;
+}
+
+export type UpdateFarmParcelDto = Partial<CreateFarmParcelDto>;
+
+export interface AdminOverview {
+  totalUsers: number;
+  totalFarmers: number;
+  totalBuyers: number;
+  totalAdmins: number;
+  activeUsers: number;
+  suspendedUsers: number;
+  totalParcels: number;
+  activeCultivationParcels: number;
+  totalLandAcres: number;
+  totalSchemes: number;
+  totalMandiRecords: number;
+  databaseStatus: 'connected' | 'disconnected' | 'degraded';
+  systemUptimeSeconds: number;
+  nodeVersion: string;
+  memoryUsageMb: number;
+}
+
+export interface AdminUserFilter {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: UserRole | 'all';
+  status?: 'active' | 'suspended' | 'all';
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  performedBy: string;
+  performedByEmail: string;
+  targetId?: string;
+  targetType?: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  timestamp: string;
+}
+
+export interface SystemHealthData {
+  status: 'healthy' | 'degraded';
+  uptimeSeconds: number;
+  timestamp: string;
+  database: {
+    state: string;
+    host: string;
+    name: string;
+  };
+  system: {
+    nodeVersion: string;
+    platform: string;
+    arch: string;
+    pid: number;
+    memory: {
+      heapUsedMb: number;
+      heapTotalMb: number;
+      rssMb: number;
+    };
+  };
+  microservices: {
+    weatherStation: string;
+    mandiAggregator: string;
+    cropInferenceEngine: string;
+  };
+}
+

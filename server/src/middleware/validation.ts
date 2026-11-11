@@ -9,7 +9,7 @@ interface ValidationErrorDetail {
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[+]?[\d\s\-()]{7,16}$/;
-const VALID_ROLES: UserRole[] = ['farmer', 'expert', 'buyer', 'admin'];
+const PUBLIC_REGISTRATION_ROLES: UserRole[] = ['farmer'];
 
 /**
  * Validates registration request body
@@ -59,6 +59,22 @@ export const validateRegister = (req: Request, _res: Response, next: NextFunctio
     errors.push({ field: 'state', message: 'State is required' });
   }
 
+  // Role validation
+  if (role !== undefined) {
+    if (role === 'admin') {
+      errors.push({
+        field: 'role',
+        message: 'Registration for admin role is prohibited'
+      });
+    } else if (!PUBLIC_REGISTRATION_ROLES.includes(role)) {
+      errors.push({
+        field: 'role',
+        message: `Invalid role specified. Permitted roles: ${PUBLIC_REGISTRATION_ROLES.join(', ')}`
+      });
+    }
+  }
+
+  // Farmer-specific field validation
   // LandHolding validation
   if (landHolding === undefined || landHolding === null || typeof landHolding !== 'number' || isNaN(landHolding) || landHolding < 0) {
     errors.push({ field: 'landHolding', message: 'Land holding must be a valid non-negative number' });
@@ -72,14 +88,6 @@ export const validateRegister = (req: Request, _res: Response, next: NextFunctio
   // IrrigationType validation
   if (!irrigationType || typeof irrigationType !== 'string' || irrigationType.trim().length === 0) {
     errors.push({ field: 'irrigationType', message: 'Irrigation type is required' });
-  }
-
-  // Role validation (optional)
-  if (role !== undefined && !VALID_ROLES.includes(role)) {
-    errors.push({
-      field: 'role',
-      message: `Invalid role specified. Permitted roles: ${VALID_ROLES.join(', ')}`
-    });
   }
 
   if (errors.length > 0) {
@@ -203,3 +211,76 @@ export const validateUpdateProfile = (req: Request, _res: Response, next: NextFu
 
   return next();
 };
+
+const VALID_PARCEL_STATUSES = ['Active Cultivation', 'Fallow', 'Harvested', 'Sowing Prep'];
+
+/**
+ * Middleware to validate farm parcel creation payload
+ */
+export const validateCreateParcel = (req: Request, _res: Response, next: NextFunction): void => {
+  const { name, areaAcres, status } = req.body;
+  const errors: ValidationErrorDetail[] = [];
+
+  if (!name || typeof name !== 'string' || name.trim().length < 2) {
+    errors.push({ field: 'name', message: 'Farm parcel name is required (minimum 2 characters)' });
+  }
+
+  if (areaAcres === undefined || areaAcres === null || typeof areaAcres !== 'number' || isNaN(areaAcres) || areaAcres <= 0) {
+    errors.push({ field: 'areaAcres', message: 'Valid land area in acres greater than 0 is required' });
+  }
+
+  if (status && !VALID_PARCEL_STATUSES.includes(status)) {
+    errors.push({
+      field: 'status',
+      message: `Invalid status. Must be one of: ${VALID_PARCEL_STATUSES.join(', ')}`
+    });
+  }
+
+  if (errors.length > 0) {
+    return next(ApiError.badRequest('Invalid farm parcel input', errors));
+  }
+
+  return next();
+};
+
+/**
+ * Middleware to validate farm parcel update payload
+ */
+export const validateUpdateParcel = (req: Request, _res: Response, next: NextFunction): void => {
+  const body = req.body;
+  const errors: ValidationErrorDetail[] = [];
+
+  if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+    return next(ApiError.badRequest('Update request must provide at least one modified field'));
+  }
+
+  if ('name' in body) {
+    const name = body.name;
+    if (typeof name !== 'string' || name.trim().length < 2) {
+      errors.push({ field: 'name', message: 'Farm parcel name must be at least 2 characters' });
+    }
+  }
+
+  if ('areaAcres' in body) {
+    const area = body.areaAcres;
+    if (typeof area !== 'number' || isNaN(area) || area <= 0) {
+      errors.push({ field: 'areaAcres', message: 'Valid land area in acres greater than 0 is required' });
+    }
+  }
+
+  if ('status' in body && body.status) {
+    if (!VALID_PARCEL_STATUSES.includes(body.status)) {
+      errors.push({
+        field: 'status',
+        message: `Invalid status. Must be one of: ${VALID_PARCEL_STATUSES.join(', ')}`
+      });
+    }
+  }
+
+  if (errors.length > 0) {
+    return next(ApiError.badRequest('Invalid farm parcel update input', errors));
+  }
+
+  return next();
+};
+

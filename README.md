@@ -86,7 +86,7 @@ AgriTech360/
 ### 2. Installation
 ```powershell
 # Clone the repository
-git clone https://github.com/EngHarshita/AgriTech360.git
+git clone https://github.com/EnDivyanshiGupta/agritech360.git
 cd AgriTech360
 
 # Install frontend dependencies
@@ -183,10 +183,10 @@ npm --prefix server run seed:schemes
 
 ## 📚 Capstone Documentation
 
-- 📐 [System Architecture Documentation](file:///c:/Users/divya/Downloads/AgriTech360-Fresh/docs/ARCHITECTURE.md)
-- 📋 [SRS & Capstone Project Report](file:///c:/Users/divya/Downloads/AgriTech360-Fresh/docs/SRS_CAPSTONE_REPORT.md)
-- 🎯 [Viva Presentation Slides (19 Slides)](file:///c:/Users/divya/Downloads/AgriTech360-Fresh/docs/VIVA_PRESENTATION.md)
-- 🎬 [Demo Walkthrough Script](file:///c:/Users/divya/Downloads/AgriTech360-Fresh/docs/DEMO_WALKTHROUGH_SCRIPT.md)
+- 📐 [System Architecture Documentation](./docs/ARCHITECTURE.md)
+- 📋 [SRS & Capstone Project Report](./docs/SRS_CAPSTONE_REPORT.md)
+- 🎯 [Viva Presentation Slides (19 Slides)](./docs/VIVA_PRESENTATION.md)
+- 🎬 [Demo Walkthrough Script](./docs/DEMO_WALKTHROUGH_SCRIPT.md)
 
 ---
 

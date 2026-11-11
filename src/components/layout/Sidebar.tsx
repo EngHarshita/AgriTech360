@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Sprout, 
+  Layers,
   CloudSun, 
   TrendingUp, 
   FileText, 
@@ -11,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 
 export interface NavItem {
@@ -35,6 +38,14 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Overview Dashboard',
     hindiLabel: 'डैशबोर्ड',
     icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    id: 'farms',
+    label: 'My Fields & Parcels',
+    hindiLabel: 'खेत व भूमि पार्सल',
+    icon: <Layers className="w-5 h-5" />,
+    badge: 'Fields',
+    badgeVariant: 'accent',
   },
   {
     id: 'crop-recommendation',
@@ -76,6 +87,55 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'admin-dashboard',
+    label: 'System Governance',
+    hindiLabel: 'प्रशासन नियंत्रण केंद्र',
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    badge: 'Admin',
+    badgeVariant: 'danger',
+  },
+  {
+    id: 'farms',
+    label: 'All Farm Parcels',
+    hindiLabel: 'कृषि भूमि रिकॉर्ड्स',
+    icon: <Layers className="w-5 h-5" />,
+  },
+  {
+    id: 'crop-recommendation',
+    label: 'Crop Advisory AI',
+    hindiLabel: 'फसल सिफारिश (AI)',
+    icon: <Sprout className="w-5 h-5" />,
+    badge: 'AI ML',
+    badgeVariant: 'success',
+  },
+  {
+    id: 'weather',
+    label: 'Weather Radar',
+    hindiLabel: 'मौसम रडार व निगरानी',
+    icon: <CloudSun className="w-5 h-5" />,
+  },
+  {
+    id: 'mandi',
+    label: 'APMC Market Bhav',
+    hindiLabel: 'मंडी भाव व आंकड़े',
+    icon: <TrendingUp className="w-5 h-5" />,
+  },
+  {
+    id: 'schemes',
+    label: 'Government Schemes',
+    hindiLabel: 'सरकारी सब्सिडी योजनाएं',
+    icon: <FileText className="w-5 h-5" />,
+  },
+  {
+    id: 'profile',
+    label: 'Admin Account',
+    hindiLabel: 'प्रशासक प्रोफ़ाइल',
+    icon: <UserCircle className="w-5 h-5" />,
+  },
+];
+
 export const Sidebar: React.FC<SidebarProps> = ({
   currentModule,
   onNavigate,
@@ -83,6 +143,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { user } = useAuth();
+  const { isHindi } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSelect = (id: string) => {
     onNavigate(id);
@@ -107,12 +170,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Navigation Items */}
         <div className="p-4 space-y-2 overflow-y-auto flex-1 scrollbar-thin">
+          {/* Admin Fast Cross-Panel Switcher */}
+          {user?.role === 'admin' && (
+            <div className="mb-3 p-1">
+              {location.pathname.startsWith('/admin') ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/farmer/dashboard')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 transition-all cursor-pointer shadow-2xs group"
+                >
+                  <span className="flex items-center gap-2">
+                    <Sprout className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                    <span>View Farmer Panel</span>
+                  </span>
+                  <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200">
+                    Kisan
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold hover:bg-rose-500/25 transition-all cursor-pointer shadow-2xs group"
+                >
+                  <span className="flex items-center gap-2">
+                    <LayoutDashboard className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                    <span>Back to Admin Panel</span>
+                  </span>
+                  <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-rose-400/20 text-rose-200">
+                    Admin
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="px-3 pb-2 pt-1 text-[10px] font-black uppercase tracking-widest text-[#50CAA2]/70">
-            Platform Modules
+            {user?.role === 'admin' ? 'Administration Control' : 'Platform Modules'}
           </div>
 
           <nav className="space-y-1" aria-label="Main application modules">
-            {NAV_ITEMS.map((item) => {
+            {(user?.role === 'admin' ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
               const isActive = currentModule === item.id;
               return (
                 <button
@@ -137,13 +235,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {item.icon}
                     </span>
                     <div className="text-left">
-                      <span className="block truncate text-xs font-bold leading-tight">{item.label}</span>
+                      <span className="block truncate text-xs font-bold leading-tight">
+                        {isHindi && item.hindiLabel ? item.hindiLabel : item.label}
+                      </span>
                       <span
                         className={`block text-[10px] font-semibold leading-none mt-1 ${
                           isActive ? 'text-[#DCF6EC]' : 'text-slate-400 group-hover:text-slate-300'
                         }`}
                       >
-                        {item.hindiLabel}
+                        {isHindi && item.hindiLabel ? item.label : item.hindiLabel}
                       </span>
                     </div>
                   </div>
@@ -207,7 +307,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
                   <span className="text-[10px] text-[#8BDFC1] font-semibold">
-                    {user.farmDetails.totalAcres} Acres Registered
+                    {user.farmDetails ? `${user.farmDetails.totalAcres} Acres Registered` : (user.role === 'admin' ? 'Platform Administrator' : 'Registered Farmer')}
                   </span>
                 </div>
               </div>

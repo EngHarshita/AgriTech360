@@ -7,5 +7,6 @@ export * as schemesService from './schemesService';
 export * as farmService from './farmService';
 export * as cropService from './cropService';
 export { alertService } from './alertService';
+export * as adminService from './adminService';
 
 

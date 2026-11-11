@@ -9,10 +9,13 @@ import {
   FileCheck, 
   Calendar, 
   Building,
+  HelpCircle,
   X
 } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { VoiceAccessibility } from '../common/VoiceAccessibility';
 import { agriService } from '../../api/agriService';
 import type { GovernmentScheme } from '../../types';
 import { Card } from '../common/Card';
@@ -20,7 +23,7 @@ import { Badge } from '../common/Badge';
 import { Skeleton } from '../common/Skeleton';
 import { EmptyState } from '../common/EmptyState';
 
-const SCHEME_CATEGORIES = [
+const SCHEME_CATEGORIES_EN = [
   'All',
   'Financial Assistance',
   'Crop Insurance',
@@ -31,6 +34,7 @@ const SCHEME_CATEGORIES = [
 
 export const SchemesView: React.FC = () => {
   const { savedSchemeIds, toggleSaveScheme } = useAgri();
+  const { isHindi } = useLanguage();
   const { showToast } = useToast();
   const [schemes, setSchemes] = useState<GovernmentScheme[]>([]);
   const [search, setSearch] = useState('');
@@ -57,9 +61,22 @@ export const SchemesView: React.FC = () => {
     const willBeSaved = !savedSchemeIds.includes(scheme.id);
     toggleSaveScheme(scheme.id);
     if (willBeSaved) {
-      showToast(`Bookmarked ${scheme.shortCode} to saved schemes`, 'success');
+      showToast(isHindi ? `${scheme.shortCode} को सहेजी गई योजनाओं में जोड़ा गया` : `Bookmarked ${scheme.shortCode} to saved schemes`, 'success');
     } else {
-      showToast(`Removed ${scheme.shortCode} from saved schemes`, 'info');
+      showToast(isHindi ? `${scheme.shortCode} को सहेजी गई सूची से हटाया गया` : `Removed ${scheme.shortCode} from saved schemes`, 'info');
+    }
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    if (!isHindi) return cat;
+    switch (cat) {
+      case 'All': return 'सभी योजनाएँ';
+      case 'Financial Assistance': return 'आर्थिक सहायता';
+      case 'Crop Insurance': return 'फसल बीमा';
+      case 'Irrigation & Machinery': return 'सिंचाई व कृषि यंत्र';
+      case 'Soil & Fertilizers': return 'मिट्टी व खाद';
+      case 'Solar Energy': return 'सौर ऊर्जा व पंप';
+      default: return cat;
     }
   };
 
@@ -67,7 +84,8 @@ export const SchemesView: React.FC = () => {
     const matchesSearch =
       scheme.title.toLowerCase().includes(search.toLowerCase()) ||
       scheme.shortCode.toLowerCase().includes(search.toLowerCase()) ||
-      scheme.description.toLowerCase().includes(search.toLowerCase());
+      scheme.description.toLowerCase().includes(search.toLowerCase()) ||
+      scheme.targetBeneficiaries.toLowerCase().includes(search.toLowerCase());
     
     if (showSavedOnly) {
       return matchesSearch && savedSchemeIds.includes(scheme.id);
@@ -81,13 +99,17 @@ export const SchemesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.06]">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Government Schemes & Subsidies
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              {isHindi ? 'सरकारी योजनाएँ एवं सब्सिडी' : 'Government Schemes & Subsidies'}
             </h1>
-            <Badge variant="primary" size="sm" dot>DBT Direct Transfer</Badge>
+            <Badge variant={agriService.isMockMode ? "warning" : "primary"} size="sm" dot>
+              {agriService.isMockMode ? (isHindi ? 'डेमो योजनाएँ' : 'DEMO CATALOG') : (isHindi ? 'डीबीटी प्रत्यक्ष लाभ' : 'DBT Direct Transfer')}
+            </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-            Official central and state agricultural subsidies, insurance schemes, and solar pump grants.
+            {isHindi 
+              ? 'केंद्र एवं राज्य सरकार की प्रमुख किसान योजनाएँ, सब्सिडी, फसल बीमा और वित्तीय सहायता।'
+              : 'Official central and state agricultural subsidies, insurance schemes, and solar pump grants.'}
           </p>
         </div>
 
@@ -97,46 +119,50 @@ export const SchemesView: React.FC = () => {
           className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B6B53] cursor-pointer ${
             showSavedOnly
               ? 'bg-[#0B6B53] text-white shadow-sm shadow-[#0B6B53]/25'
-              : 'bg-white border border-black/[0.08] text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+              : 'bg-white border border-black/[0.08] text-slate-700 hover:bg-slate-50 shadow-soft'
           }`}
         >
-          {showSavedOnly ? (
-            <BookmarkCheck className="w-4 h-4 text-white" aria-hidden="true" />
-          ) : (
-            <Bookmark className="w-4 h-4 text-[#0B6B53]" aria-hidden="true" />
-          )}
-          Saved Schemes ({savedSchemeIds.length})
+          {showSavedOnly ? <BookmarkCheck className="w-4 h-4 text-white" /> : <Bookmark className="w-4 h-4 text-slate-400" />}
+          <span>{isHindi ? `सहेजी गई योजनाएँ (${savedSchemeIds.length})` : `Saved Schemes (${savedSchemeIds.length})`}</span>
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* Search and Category Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <label htmlFor="schemes-search-input" className="sr-only">Search government schemes</label>
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" aria-hidden="true" />
-          <input
-            id="schemes-search-input"
-            type="text"
-            placeholder="Search by scheme name, PM-KISAN, subsidy..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
+        <div className="flex items-center gap-2 flex-1 max-w-lg">
+          <div className="relative flex-1">
+            <label htmlFor="scheme-search-input" className="sr-only">
+              {isHindi ? 'योजना खोजें' : 'Search government schemes'}
+            </label>
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" aria-hidden="true" />
+            <input
+              id="scheme-search-input"
+              type="text"
+              placeholder={isHindi ? 'योजना का नाम खोजें (उदा. पीएम किसान, कुसुम सौर पंप, फसल बीमा)...' : 'Search schemes by title, shortcode, or benefit...'}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-black/[0.08] text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-[#0B6B53] outline-none bg-white shadow-soft"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-2.5 p-0.5 rounded text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label={isHindi ? 'खोज मिटाएं' : 'Clear search'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <VoiceAccessibility
+            isSearchMode
+            onVoiceQuery={(query) => setSearch(query)}
+            label={isHindi ? 'बोलकर खोजें' : 'Voice Search'}
           />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-2.5 p-0.5 rounded text-slate-400 hover:text-slate-600 transition-colors"
-              aria-label="Clear scheme search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
         {/* Categories */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1" role="toolbar" aria-label="Scheme category filters">
-          {SCHEME_CATEGORIES.map((cat) => (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" role="toolbar" aria-label="Scheme categories">
+          {SCHEME_CATEGORIES_EN.map((cat) => (
             <button
               key={cat}
               onClick={() => {
@@ -149,18 +175,16 @@ export const SchemesView: React.FC = () => {
                   : 'bg-white border border-black/[0.06] text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
               }`}
             >
-              {cat}
+              {getCategoryLabel(cat)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Schemes List with Skeletons or Cards */}
+      {/* Schemes List with Skeletons or Cards (Requirement 5: Display 5 key farmer fields) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {loading ? (
           <>
-            <Skeleton variant="card" className="h-80" />
-            <Skeleton variant="card" className="h-80" />
             <Skeleton variant="card" className="h-80" />
             <Skeleton variant="card" className="h-80" />
           </>
@@ -169,17 +193,17 @@ export const SchemesView: React.FC = () => {
             {showSavedOnly ? (
               <EmptyState
                 icon={<Bookmark className="w-8 h-8 text-[#0B6B53]" />}
-                title="No Saved Schemes Yet"
-                description="Click the bookmark icon on any scheme card to save it for quick reference and application checklists."
-                actionText="Explore All Schemes"
+                title={isHindi ? "कोई सहेजी गई योजना नहीं है" : "No Saved Schemes Yet"}
+                description={isHindi ? "किसी भी योजना कार्ड पर बुकमार्क आइकन दबाकर उसे बाद के लिए सहेजें।" : "Click the bookmark icon on any scheme card to save it."}
+                actionText={isHindi ? "सभी योजनाएँ देखें" : "Explore All Schemes"}
                 onAction={() => setShowSavedOnly(false)}
               />
             ) : (
               <EmptyState
                 icon={<FileText className="w-8 h-8 text-[#F5B642]" />}
-                title="No Schemes Found"
-                description={`No schemes match "${search}". Try searching by category or keywords like subsidy, insurance, or solar.`}
-                actionText="Reset Search"
+                title={isHindi ? "कोई योजना नहीं मिली" : "No Schemes Found"}
+                description={isHindi ? `"${search}" से संबंधित कोई योजना नहीं मिली।` : `No schemes match "${search}".`}
+                actionText={isHindi ? "खोज रीसेट करें" : "Reset Search"}
                 onAction={() => {
                   setSearch('');
                   setSelectedCategory('All');
@@ -191,18 +215,20 @@ export const SchemesView: React.FC = () => {
           filteredSchemes.map((scheme) => {
             const isSaved = savedSchemeIds.includes(scheme.id);
             return (
-              <Card key={scheme.id} hoverEffect className="border border-black/[0.06] shadow-soft rounded-2xl flex flex-col justify-between overflow-hidden bg-white hover:border-[#0B6B53]/30 transition-all">
+              <Card key={scheme.id} hoverEffect className="border-2 border-slate-200/80 shadow-soft rounded-2xl flex flex-col justify-between overflow-hidden bg-white hover:border-[#0B6B53] transition-all">
                 <div>
-                  {/* Card Top */}
+                  {/* Card Header: योजना का नाम */}
                   <div className="p-5 pb-4 border-b border-black/[0.04] flex items-start justify-between gap-3">
                     <div className="space-y-1.5 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-[#0B6B53] bg-[#0B6B53]/10 border border-[#0B6B53]/20 px-2 py-0.5 rounded-md">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-[#0B6B53] bg-[#0B6B53]/10 border border-[#0B6B53]/20 px-2.5 py-0.5 rounded-md">
                           {scheme.shortCode}
                         </span>
-                        <Badge variant="neutral" size="sm">{scheme.category}</Badge>
+                        <Badge variant="neutral" size="sm">{getCategoryLabel(scheme.category)}</Badge>
                       </div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug">
+
+                      {/* Requirement 5.1: योजना का नाम */}
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight leading-snug">
                         {scheme.title}
                       </h3>
                       <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
@@ -211,65 +237,78 @@ export const SchemesView: React.FC = () => {
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => handleToggleSave(scheme)}
-                      aria-label={isSaved ? `Remove ${scheme.shortCode} from saved schemes` : `Save ${scheme.shortCode} scheme`}
-                      className={`p-2 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B6B53] cursor-pointer shrink-0 ${
-                        isSaved
-                          ? 'bg-[#0B6B53]/10 text-[#0B6B53] hover:bg-[#0B6B53]/15'
-                          : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
-                      }`}
-                    >
-                      {isSaved ? <BookmarkCheck className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" /> : <Bookmark className="w-5 h-5" aria-hidden="true" />}
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <VoiceAccessibility
+                        textToSpeak={`${isHindi ? 'योजना का नाम' : 'Scheme'}: ${scheme.title}. ${isHindi ? 'क्या लाभ मिल सकता है' : 'Benefit'}: ${scheme.subsidyAmount}. ${isHindi ? 'किस किसान के लिए है' : 'Target'}: ${scheme.targetBeneficiaries}`}
+                        label={isHindi ? 'योजना सुनें' : 'Read Scheme'}
+                      />
+                      <button
+                        onClick={() => handleToggleSave(scheme)}
+                        aria-label={isSaved ? `Remove ${scheme.shortCode} from saved` : `Save ${scheme.shortCode}`}
+                        className={`p-2 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B6B53] cursor-pointer ${
+                          isSaved
+                            ? 'bg-[#0B6B53]/10 text-[#0B6B53] hover:bg-[#0B6B53]/15'
+                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                      >
+                        {isSaved ? <BookmarkCheck className="w-5 h-5 text-[#0B6B53]" /> : <Bookmark className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Subsidy Highlight */}
-                  <div className="px-5 py-3.5 bg-gradient-to-r from-[#0B6B53]/[0.05] via-[#1B8F6B]/[0.03] to-emerald-50/20 border-b border-black/[0.04] flex items-center justify-between">
+                  {/* Requirement 5.3: क्या लाभ मिल सकता है */}
+                  <div className="px-5 py-3.5 bg-gradient-to-r from-[#0B6B53]/[0.08] via-[#1B8F6B]/[0.04] to-emerald-50/30 border-b border-black/[0.04] flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                        Direct Subsidy / Benefit
+                      <span className="text-[11px] font-black uppercase tracking-wider text-[#0B6B53] block">
+                        {isHindi ? 'क्या लाभ मिल सकता है:' : 'Direct Subsidy / Benefit:'}
                       </span>
-                      <span className="text-sm sm:text-base font-black text-[#0B6B53] tracking-tight">
+                      <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                         {scheme.subsidyAmount}
                       </span>
                     </div>
-                    <Badge variant="success" size="sm">{scheme.status}</Badge>
+                    <Badge variant="success" size="sm">
+                      {isHindi ? 'सक्रिय योजना' : scheme.status}
+                    </Badge>
                   </div>
 
                   {/* Body Content */}
                   <div className="p-5 space-y-4 text-xs">
-                    <p className="text-slate-600 leading-relaxed font-normal">
+                    <p className="text-slate-600 leading-relaxed font-normal text-xs sm:text-sm">
                       {scheme.description}
                     </p>
 
-                    {/* Eligibility criteria */}
-                    <div>
-                      <span className="font-bold text-slate-900 block mb-2 flex items-center gap-1.5 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" aria-hidden="true" /> Eligibility Checklist
+                    {/* Requirement 5.2: किस किसान के लिए है */}
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                      <span className="font-bold text-slate-900 block mb-1 text-xs flex items-center gap-1.5">
+                        <HelpCircle className="w-3.5 h-3.5 text-[#0B6B53]" />
+                        {isHindi ? 'किस किसान के लिए है:' : 'Eligible Beneficiaries:'}
                       </span>
-                      <ul className="space-y-1.5 pl-1" aria-label="Eligibility requirements">
+                      <p className="text-xs text-slate-700 font-semibold leading-relaxed">
+                        {scheme.targetBeneficiaries}
+                      </p>
+                      <ul className="mt-2 space-y-1 pl-1">
                         {scheme.eligibilityCriteria.map((crit, idx) => (
-                          <li key={idx} className="text-slate-600 flex items-start gap-2 text-xs font-medium leading-relaxed">
-                            <span className="text-[#0B6B53] font-bold mt-0.5">•</span>
+                          <li key={idx} className="text-slate-600 flex items-start gap-1.5 text-xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 mt-0.5 shrink-0" />
                             <span>{crit}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    {/* Documents Required */}
-                    <div className="p-3.5 rounded-xl bg-[#F5F7F6] border border-black/[0.04]">
-                      <span className="font-bold text-slate-800 block mb-2 text-xs flex items-center gap-1.5">
-                        <FileCheck className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" /> Documents Needed
+                    {/* Requirement 5.4: कौन से दस्तावेज जरूरी हैं */}
+                    <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60">
+                      <span className="font-bold text-amber-950 block mb-2 text-xs flex items-center gap-1.5">
+                        <FileCheck className="w-3.5 h-3.5 text-amber-700" aria-hidden="true" />
+                        {isHindi ? 'कौन से दस्तावेज जरूरी हैं:' : 'Documents Needed:'}
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {scheme.documentsRequired.map((doc, idx) => (
                           <span
                             key={idx}
-                            className="text-[11px] bg-white border border-black/[0.06] font-semibold px-2.5 py-0.5 rounded-md text-slate-700 shadow-2xs"
+                            className="text-xs bg-white border border-amber-200 font-bold px-2.5 py-0.5 rounded-md text-slate-800 shadow-2xs"
                           >
-                            {doc}
+                            ✓ {doc}
                           </span>
                         ))}
                       </div>
@@ -277,21 +316,23 @@ export const SchemesView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Footer Apply Link */}
-                <div className="p-4 bg-[#F5F7F6]/60 border-t border-black/[0.04] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-                    Deadline: <strong className="text-slate-900 font-bold">{scheme.deadline}</strong>
+                {/* Requirement 5.5: आवेदन कहाँ करें */}
+                <div className="p-4 bg-[#F5F7F6]/80 border-t border-black/[0.04] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{isHindi ? 'आवेदन की अंतिम तारीख:' : 'Deadline:'}</span>
+                    <strong className="text-slate-900">{scheme.deadline}</strong>
                   </div>
 
                   <a
                     href={scheme.officialPortalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`Apply on official portal for ${scheme.title} (opens in new tab)`}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B6B53] text-white font-bold text-xs hover:bg-[#1B8F6B] shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B6B53]"
+                    aria-label={`Apply on official portal for ${scheme.title}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0B6B53] text-white font-black text-xs hover:bg-[#1B8F6B] shadow-md transition-all focus:outline-none focus:ring-4 focus:ring-[#0B6B53]/20 w-full sm:w-auto justify-center"
                   >
-                    Apply on Govt Portal <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{isHindi ? 'आवेदन यहाँ करें (Govt Portal)' : 'Apply on Govt Portal'}</span>
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   </a>
                 </div>
               </Card>
@@ -302,4 +343,3 @@ export const SchemesView: React.FC = () => {
     </div>
   );
 };
-

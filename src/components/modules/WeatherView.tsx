@@ -3,7 +3,6 @@ import {
   Droplets, 
   Wind, 
   Thermometer, 
-  Sun, 
   Clock, 
   Calendar, 
   ShieldAlert, 
@@ -12,7 +11,9 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { VoiceAccessibility } from '../common/VoiceAccessibility';
 import { agriService } from '../../api/agriService';
 import type { WeatherIntelligence } from '../../types';
 import { Card, CardHeader, CardContent } from '../common/Card';
@@ -23,6 +24,7 @@ import { EmptyState } from '../common/EmptyState';
 
 export const WeatherView: React.FC = () => {
   const { currentSelectedLocation } = useAgri();
+  const { isHindi } = useLanguage();
   const { showToast } = useToast();
   const [weather, setWeather] = useState<WeatherIntelligence | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,11 +36,11 @@ export const WeatherView: React.FC = () => {
     try {
       const data = await agriService.getWeatherIntelligence(currentSelectedLocation);
       setWeather(data);
-      showToast('Live satellite weather and spray advisory updated', 'info');
+      showToast(isHindi ? 'ताजा मौसम और कृषि सलाह अपडेट हो गई' : 'Live weather and spray advisory updated', 'info');
     } catch (err) {
       console.error('Error fetching weather:', err);
-      setError('Failed to connect to OpenWeather agro-meteorological station.');
-      showToast('Could not refresh weather feed', 'error');
+      setError(isHindi ? 'मौसम केंद्र से संपर्क नहीं हो पाया। कृपया दोबारा प्रयास करें।' : 'Failed to connect to weather station.');
+      showToast(isHindi ? 'मौसम डेटा लोड नहीं हो सका' : 'Could not refresh weather feed', 'error');
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export const WeatherView: React.FC = () => {
         if (isMounted) setWeather(data);
       } catch (err) {
         console.error('Error fetching weather:', err);
-        if (isMounted) setError('Failed to connect to agro-meteorological station.');
+        if (isMounted) setError(isHindi ? 'मौसम केंद्र से संपर्क नहीं हो पाया।' : 'Failed to connect to agro-meteorological station.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -63,15 +65,15 @@ export const WeatherView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentSelectedLocation]);
+  }, [currentSelectedLocation, isHindi]);
 
   if (error && !loading) {
     return (
       <EmptyState
         icon={<AlertTriangle className="w-8 h-8 text-rose-600" />}
-        title="Weather Station Unavailable"
+        title={isHindi ? "मौसम जानकारी उपलब्ध नहीं है" : "Weather Station Unavailable"}
         description={error}
-        actionText="Reconnect Radar"
+        actionText={isHindi ? "दोबारा कनेक्ट करें" : "Reconnect Radar"}
         onAction={fetchWeather}
         className="mt-12"
       />
@@ -85,25 +87,35 @@ export const WeatherView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-              Hyper-Local Weather Intelligence
+              {isHindi ? 'मौसम की जानकारी' : 'Hyper-Local Weather Intelligence'}
             </h1>
-            <Badge variant="primary" size="sm" dot>OpenWeather Synced</Badge>
+            <Badge variant={agriService.isMockMode ? "warning" : "primary"} size="sm" dot>
+              {agriService.isMockMode ? (isHindi ? 'डेमो मौसम' : 'DEMO RADAR') : (isHindi ? 'लाइव मौसम' : 'Live Synced')}
+            </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-[#0B6B53] shrink-0" aria-hidden="true" />
-            Station: <strong className="text-slate-800">{weather?.location || currentSelectedLocation}, {weather?.state || 'India'}</strong> {weather && `(Lat: ${weather.coordinates.lat}°N, Lng: ${weather.coordinates.lng}°E)`}
+            {isHindi ? 'स्थान:' : 'Station:'} <strong className="text-slate-800">{weather?.location || currentSelectedLocation}, {weather?.state || (isHindi ? 'भारत' : 'India')}</strong>
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          isLoading={loading}
-          onClick={fetchWeather}
-          leftIcon={<RefreshCw className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />}
-        >
-          Refresh Live Radar
-        </Button>
+        <div className="flex items-center gap-2">
+          {weather && (
+            <VoiceAccessibility
+              textToSpeak={`${isHindi ? 'आज का मौसम' : 'Weather summary'}: ${weather.location}. ${isHindi ? 'आज का तापमान' : 'Today temperature'}: ${weather.current.temp} डिग्री. ${isHindi ? 'खेती के लिए सलाह' : 'Advisory'}: ${weather.agriculturalAdvisory.title}. ${weather.agriculturalAdvisory.message}`}
+              label={isHindi ? 'मौसम सुनें' : 'Read Weather'}
+            />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            isLoading={loading}
+            onClick={fetchWeather}
+            leftIcon={<RefreshCw className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />}
+          >
+            {isHindi ? 'ताजा करें' : 'Refresh Radar'}
+          </Button>
+        </div>
       </div>
 
       {loading || !weather ? (
@@ -121,7 +133,7 @@ export const WeatherView: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Hero Weather Card & Agricultural Advisory */}
+          {/* Hero Weather Card & Agricultural Advisory (Requirement 5: Simple farmer language) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Current Conditions (7 cols) */}
             <div className="lg:col-span-7">
@@ -129,18 +141,18 @@ export const WeatherView: React.FC = () => {
                 <CardContent className="p-6 sm:p-7">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div>
-                      <span className="text-[11px] font-black uppercase tracking-wider text-[#0B6B53] block">
-                        Current Farm Temperature
+                      <span className="text-xs font-black uppercase tracking-wider text-[#0B6B53] block">
+                        {isHindi ? 'आज का तापमान' : 'Current Farm Temperature'}
                       </span>
                       <div className="flex items-baseline gap-3 mt-1.5">
                         <span className="text-5xl sm:text-6xl font-black text-slate-900 tracking-tight">
                           {weather.current.temp}°C
                         </span>
                         <span className="text-xs sm:text-sm font-bold text-slate-500">
-                          Feels like {weather.current.feelsLike}°C
+                          {isHindi ? 'अनुभव' : 'Feels like'} {weather.current.feelsLike}°C
                         </span>
                       </div>
-                      <p className="text-sm font-black text-slate-800 mt-2.5">
+                      <p className="text-base font-black text-slate-800 mt-2.5">
                         {weather.current.condition} • {weather.current.description}
                       </p>
                     </div>
@@ -150,72 +162,88 @@ export const WeatherView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Grid of micro-agrometeorology metrics */}
+                  {/* 4 Plain Language Farmer Metrics (Requirement 5) */}
                   <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-black/[0.06]">
+                    {/* बारिश की संभावना */}
                     <div className="p-3.5 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-black/[0.12] transition-colors">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-1">
-                        <Droplets className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" /> Humidity
+                        <Droplets className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
+                        <span>{isHindi ? 'बारिश की संभावना' : 'Rain Chance'}</span>
                       </div>
-                      <span className="text-lg font-black text-slate-900">{weather.current.humidity}%</span>
+                      <span className="text-lg font-black text-slate-900">{weather.hourly[0]?.pop || 10}%</span>
                     </div>
 
+                    {/* हवा की स्थिति */}
                     <div className="p-3.5 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-black/[0.12] transition-colors">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-1">
-                        <Wind className="w-3.5 h-3.5 text-[#0B6B53]" aria-hidden="true" /> Wind Speed
+                        <Wind className="w-3.5 h-3.5 text-[#0B6B53]" aria-hidden="true" />
+                        <span>{isHindi ? 'हवा की स्थिति' : 'Wind Speed'}</span>
                       </div>
                       <span className="text-base sm:text-lg font-black text-slate-900">{weather.current.windSpeed} km/h</span>
                     </div>
 
+                    {/* हवा में नमी */}
                     <div className="p-3.5 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-black/[0.12] transition-colors">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-1">
-                        <Thermometer className="w-3.5 h-3.5 text-orange-600" aria-hidden="true" /> Soil Temp (10cm)
+                        <Droplets className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
+                        <span>{isHindi ? 'हवा में नमी' : 'Humidity'}</span>
                       </div>
-                      <span className="text-lg font-black text-slate-900">{weather.current.soilTemperature}°C</span>
+                      <span className="text-lg font-black text-slate-900">{weather.current.humidity}%</span>
                     </div>
 
+                    {/* मिट्टी का तापमान */}
                     <div className="p-3.5 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-black/[0.12] transition-colors">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-1">
-                        <Sun className="w-3.5 h-3.5 text-[#C77914]" aria-hidden="true" /> Evapotranspiration
+                        <Thermometer className="w-3.5 h-3.5 text-orange-600" aria-hidden="true" />
+                        <span>{isHindi ? 'मिट्टी का तापमान' : 'Soil Temp'}</span>
                       </div>
-                      <span className="text-base sm:text-lg font-black text-slate-900">{weather.current.evapotranspiration} mm/d</span>
+                      <span className="text-lg font-black text-slate-900">{weather.current.soilTemperature}°C</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right: Agricultural Advisory & Spray Window (5 cols) */}
+            {/* Right: खेती के लिए मौसम की जानकारी व सलाह (5 cols) */}
             <div className="lg:col-span-5 space-y-4">
               <Card className="border border-black/[0.06] bg-white shadow-soft">
                 <CardHeader
-                  title="Kisan Agricultural Advisory"
-                  subtitle="Daily Pest Risk & Spray Window"
+                  title={isHindi ? "खेती के लिए मौसम की जानकारी" : "Agricultural Advisory"}
+                  subtitle={isHindi ? "सिंचाई व दवा छिड़काव के लिए सलाह" : "Pest Risk & Spray Timeline"}
                   icon={<ShieldAlert className="w-5 h-5 text-[#C77914]" aria-hidden="true" />}
-                  action={<Badge variant="warning" size="sm">Level: {weather.agriculturalAdvisory.level}</Badge>}
+                  action={
+                    <Badge variant="warning" size="sm">
+                      {isHindi ? 'चेतावनी' : 'Level'}: {weather.agriculturalAdvisory.level}
+                    </Badge>
+                  }
                 />
                 <CardContent className="p-5 space-y-4">
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                    <h4 className="text-sm font-black text-slate-900">
                       {weather.agriculturalAdvisory.title}
                     </h4>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed font-medium">
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed font-medium">
                       {weather.agriculturalAdvisory.message}
                     </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-[#F0F9F6] border border-[#DCF1EB]">
-                    <span className="text-xs font-black text-[#0B6B53] block mb-0.5">
-                      💧 Irrigation Guidance
+                    <span className="text-xs font-black text-[#0B6B53] block mb-1">
+                      💧 {isHindi ? 'सिंचाई के लिए सलाह' : 'Irrigation Advice'}
                     </span>
-                    <p className="text-xs text-slate-700 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-700 font-medium">
                       {weather.agriculturalAdvisory.irrigationRecommendation}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-black/[0.05] text-xs">
-                    <span className="font-bold text-slate-700">Pest & Fungal Risk Index:</span>
+                    <span className="font-bold text-slate-700">
+                      {isHindi ? 'दवा छिड़काव (स्प्रे) की स्थिति:' : 'Pest Risk:'}
+                    </span>
                     <Badge variant={weather.agriculturalAdvisory.pestRiskLevel === 'Low' ? 'success' : 'warning'} size="sm">
-                      {weather.agriculturalAdvisory.pestRiskLevel} Risk
+                      {weather.agriculturalAdvisory.pestRiskLevel === 'Low'
+                        ? (isHindi ? 'छिड़काव के लिए उत्तम' : 'Low Risk / Safe')
+                        : (isHindi ? 'मध्यम जोखिम' : 'Moderate Risk')}
                     </Badge>
                   </div>
                 </CardContent>
@@ -223,11 +251,11 @@ export const WeatherView: React.FC = () => {
             </div>
           </div>
 
-          {/* 24-Hour Hourly Timeline */}
+          {/* 24-Hour Timeline */}
           <Card className="border border-black/[0.06] shadow-soft">
             <CardHeader
-              title="24-Hour Hourly Forecast"
-              subtitle="Precipitation Probability & Wind Variations"
+              title={isHindi ? "अगले 24 घंटे का मौसम" : "24-Hour Hourly Forecast"}
+              subtitle={isHindi ? "तापमान, बारिश की संभावना और हवा की रफ्तार" : "Precipitation Probability & Wind Variations"}
               icon={<Clock className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
             />
             <CardContent className="p-5">
@@ -235,7 +263,7 @@ export const WeatherView: React.FC = () => {
                 className="flex items-center gap-3.5 overflow-x-auto pb-3 pt-1 scrollbar-thin"
                 tabIndex={0}
                 role="region"
-                aria-label="Hourly timeline forecast"
+                aria-label={isHindi ? "24 घंटे का पूर्वानुमान" : "Hourly timeline forecast"}
               >
                 {weather.hourly.map((h, i) => (
                   <div
@@ -260,8 +288,8 @@ export const WeatherView: React.FC = () => {
           {/* 7-Day Extended Agricultural Forecast */}
           <Card className="border border-black/[0.06] shadow-soft">
             <CardHeader
-              title="7-Day Extended Agro-Forecast"
-              subtitle="Spray Suitability & Rainfall Accumulation"
+              title={isHindi ? "अगले 7 दिनों का मौसम पूर्वानुमान" : "7-Day Extended Agro-Forecast"}
+              subtitle={isHindi ? "दवा छिड़काव व बारिश की संभावना" : "Spray Suitability & Rainfall Accumulation"}
               icon={<Calendar className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
             />
             <CardContent className="p-0">
@@ -292,13 +320,15 @@ export const WeatherView: React.FC = () => {
 
                       <div className="text-xs font-bold text-slate-600 min-w-[90px] flex items-center gap-1.5">
                         <Droplets className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
-                        {day.rainfallMm} mm rain
+                        {day.rainfallMm} mm {isHindi ? 'बारिश' : 'rain'}
                       </div>
                     </div>
 
                     {/* Spray Suitability Tag */}
                     <div className="flex items-center justify-between sm:justify-end gap-2">
-                      <span className="text-xs font-bold text-slate-500">Pesticide Spray:</span>
+                      <span className="text-xs font-bold text-slate-500">
+                        {isHindi ? 'दवा छिड़काव:' : 'Pesticide Spray:'}
+                      </span>
                       <Badge
                         variant={
                           day.spraySuitability === 'Excellent'
@@ -311,7 +341,15 @@ export const WeatherView: React.FC = () => {
                         }
                         size="md"
                       >
-                        {day.spraySuitability}
+                        {isHindi
+                          ? day.spraySuitability === 'Excellent'
+                            ? 'उत्तम'
+                            : day.spraySuitability === 'Good'
+                            ? 'अच्छा'
+                            : day.spraySuitability === 'Fair'
+                            ? 'सामान्य'
+                            : 'प्रतिकूल'
+                          : day.spraySuitability}
                       </Badge>
                     </div>
                   </div>

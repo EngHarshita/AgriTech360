@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserCheck, Shield, Sprout, ArrowRight } from 'lucide-react';
+import { X, Shield, Sprout, User, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../common/Button';
-import { mockCurrentUser } from '../../data/mockData';
+import { mockCurrentUser, mockCurrentAdmin } from '../../data/mockData';
+import { env } from '../../config/env';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,19 +15,22 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const { login, register } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
 
   // Form states
-  const [loginEmail, setLoginEmail] = useState('rajesh.sharma@agritech360.in');
-  const [password, setPassword] = useState('kisan1234');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [name, setName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [village, setVillage] = useState('');
-  const [district, setDistrict] = useState('Indore');
-  const [state, setState] = useState('Madhya Pradesh');
-  const [acres, setAcres] = useState('5.0');
+  const [district, setDistrict] = useState('');
+  const [state, setState] = useState('');
+  const [acres, setAcres] = useState('');
   const [soilType, setSoilType] = useState<'Alluvial' | 'Black' | 'Red' | 'Laterite' | 'Loamy' | 'Sandy Loam'>('Black');
 
   // Handle Escape key to close modal
@@ -47,14 +52,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = async (role: 'farmer' | 'admin' = 'farmer') => {
     setLoading(true);
     try {
-      await login(mockCurrentUser.email, 'demo');
-      showToast('Signed in as Rajesh Sharma (Indore, 12.5 Acres)', 'success');
+      const demoEmail = role === 'admin' ? mockCurrentAdmin.email : mockCurrentUser.email;
+      await login(demoEmail, 'demo');
+      showToast(
+        role === 'admin'
+          ? 'Signed in as Devraj Chauhan (Admin Control Panel)'
+          : 'Signed in as Rajesh Sharma (Farmer Panel)',
+        'success'
+      );
       onClose();
+      if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/farmer/dashboard');
+      }
     } catch (err: any) {
-      showToast(err?.message || 'Demo sign-in failed. Please verify credentials or register a new farmer account.', 'error');
+      showToast(err?.message || 'Demo sign-in failed. Please verify credentials.', 'error');
     } finally {
       setLoading(false);
     }
@@ -79,83 +95,77 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     try {
       await register({
-        name: name || 'Suresh Patel',
-        phone: phone || '+91 94251 12345',
+        name: name.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        phone: phone.trim(),
+        role: 'farmer',
         location: {
-          village: village || 'Dharampuri',
-          district: district || 'Dhar',
-          state: state || 'Madhya Pradesh',
-          pincode: '454001',
+          village: village.trim(),
+          district: district.trim(),
+          state: state.trim(),
+          pincode: '',
         },
         farmDetails: {
-          totalAcres: parseFloat(acres) || 4.5,
+          totalAcres: parseFloat(acres) || 0,
           soilType,
           irrigationType: 'Drip',
-          primaryCrops: ['Wheat', 'Soybean'],
-          kisanCreditCardNo: 'KCC-MP-NEW-01',
+          primaryCrops: [],
         },
       });
-      showToast('New farmer profile registered successfully!', 'success');
+      showToast('Farmer profile created successfully! Welcome to AgriTech360.', 'success');
       onClose();
+      navigate('/farmer/dashboard');
     } catch (err: any) {
-      showToast(err?.message || 'Registration failed. Please try again.', 'error');
+      showToast(err?.message || 'Registration failed. Please fill all required fields and try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in"
-      onClick={onClose}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"
     >
       <div 
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="auth-modal-title"
-        className="bg-white rounded-2xl shadow-2xl border border-black/[0.08] w-full max-w-md overflow-hidden relative max-h-[92vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-black/[0.08] overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95"
       >
-        {/* Header decoration */}
-        <div className="bg-gradient-to-r from-[#0D2B23] via-[#0B6B53] to-[#1B8F6B] p-6 text-white relative shrink-0">
+        {/* Header */}
+        <div className="p-6 pb-4 border-b border-black/[0.06] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0B6B53] to-[#085240] flex items-center justify-center text-white shadow-soft">
+              <Sprout className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h3 id="auth-modal-title" className="text-base font-extrabold text-slate-900 tracking-tight">AgriTech360</h3>
+              <p className="text-xs text-slate-500 font-semibold">Agricultural Intelligence & Advisory</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            aria-label="Close dialog"
-            className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
+            aria-label="Close authentication modal"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" aria-hidden="true" />
+            <X className="w-5 h-5" />
           </button>
-          
-          <div className="flex items-center gap-2 mb-2">
-            <span className="p-1.5 rounded-lg bg-white/15 backdrop-blur-md">
-              <Sprout className="w-4 h-4 text-emerald-300" aria-hidden="true" />
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">
-              Kisan Portal Access
-            </span>
-          </div>
-
-          <h2 id="auth-modal-title" className="text-2xl font-black tracking-tight">
-            {mode === 'login' ? 'Farmer Sign In' : 'Register New Farm'}
-          </h2>
-          <p className="text-xs text-emerald-100/90 font-medium mt-1">
-            Access hyper-local recommendations, live mandi rates & schemes.
-          </p>
         </div>
 
-        {/* Tab selection */}
-        <div className="flex border-b border-black/[0.06] bg-[#F5F7F6]/60 px-6 pt-3 shrink-0" role="tablist">
+        {/* Tab Switcher */}
+        <div className="flex border-b border-black/[0.06] px-6 pt-3 gap-6" role="tablist">
           <button
             role="tab"
             aria-selected={mode === 'login'}
             onClick={() => setMode('login')}
-            className={`pb-3 text-xs font-bold transition-all relative mr-6 cursor-pointer ${
+            className={`pb-3 text-xs font-bold transition-all relative cursor-pointer ${
               mode === 'login'
                 ? 'text-[#0B6B53] border-b-2 border-[#0B6B53]'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            Sign In with Credentials
+            Sign In
           </button>
           <button
             role="tab"
@@ -167,32 +177,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            New Farmer Registration
+            Create Farmer Account
           </button>
         </div>
 
         <div className="p-6 overflow-y-auto">
-          {/* Quick Evaluator One-Click Demo Button */}
-          <div className="mb-5 p-4 rounded-xl bg-gradient-to-br from-[#0B6B53]/[0.08] to-[#1B8F6B]/[0.04] border border-[#0B6B53]/15 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <UserCheck className="w-4 h-4 text-[#0B6B53]" aria-hidden="true" />
-                Quick Evaluator Demo
-              </div>
-              <div className="text-[11px] font-medium text-slate-600 mt-0.5">
-                Rajesh Sharma (12.5 Acres, Indore)
+          {/* Quick Evaluator One-Click Demo Buttons */}
+          {(env.useMockData || env.isDemoMode) && env.environment !== 'production' && (
+            <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-br from-[#0B6B53]/[0.08] to-[#1B8F6B]/[0.04] border border-[#0B6B53]/15 space-y-2.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#0B6B53] block">
+                Quick Evaluator Demo Sandbox
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={loading}
+                  onClick={() => handleDemoLogin('farmer')}
+                  leftIcon={<User className="w-3.5 h-3.5" />}
+                  className="w-full text-[11px]"
+                >
+                  Farmer Demo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  isLoading={loading}
+                  onClick={() => handleDemoLogin('admin')}
+                  leftIcon={<ShieldCheck className="w-3.5 h-3.5 text-rose-600" />}
+                  className="w-full text-[11px] border-rose-200 text-rose-700 hover:bg-rose-50"
+                >
+                  Admin Demo
+                </Button>
               </div>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              isLoading={loading}
-              onClick={handleDemoLogin}
-              rightIcon={<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />}
-            >
-              One-Click Demo
-            </Button>
-          </div>
+          )}
 
           {mode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -205,7 +224,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   type="text"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="e.g. 9876543210 or email@domain.com"
+                  placeholder="e.g. kisan@agritech360.in or admin@agritech360.internal"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs transition-all"
                 />
@@ -213,7 +232,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
               <div>
                 <label htmlFor="login-password-input" className="block text-xs font-bold text-slate-700 mb-1">
-                  Password / PIN
+                  Password
                 </label>
                 <input
                   id="login-password-input"
@@ -233,10 +252,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => showToast('Demo security PIN: 1234', 'info')}
+                  onClick={() =>
+                    showToast('Demo credentials — Farmer: rajesh.sharma@agritech360.in | Admin: admin@agritech360.internal', 'info')
+                  }
                   className="text-[#0B6B53] hover:underline font-bold"
                 >
-                  Forgot PIN?
+                  Forgot Password?
                 </button>
               </div>
 
@@ -254,14 +275,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 pr-1">
               <div>
                 <label htmlFor="reg-name-input" className="block text-xs font-bold text-slate-700 mb-1">
-                  Farmer Full Name
+                  Farmer Full Name (किसान का नाम) <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="reg-name-input"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Ramesh Kumar"
+                  placeholder="e.g. Ramesh Patel"
                   required
                   className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
                 />
@@ -269,8 +290,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
+                  <label htmlFor="reg-email-input" className="block text-xs font-bold text-slate-700 mb-1">
+                    Email Address <span className="text-rose-500" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="reg-email-input"
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder="name@domain.com"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="reg-pass-input" className="block text-xs font-bold text-slate-700 mb-1">
+                    Password <span className="text-rose-500" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="reg-pass-input"
+                    type="password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Min 6 characters"
+                    minLength={6}
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
                   <label htmlFor="reg-phone-input" className="block text-xs font-bold text-slate-700 mb-1">
-                    Mobile Phone
+                    Mobile Phone <span className="text-rose-500" aria-hidden="true">*</span>
                   </label>
                   <input
                     id="reg-phone-input"
@@ -284,12 +337,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div>
                   <label htmlFor="reg-acres-input" className="block text-xs font-bold text-slate-700 mb-1">
-                    Land (Acres)
+                    Land (Acres) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     id="reg-acres-input"
                     type="number"
                     step="0.5"
+                    min="0"
                     value={acres}
                     onChange={(e) => setAcres(e.target.value)}
                     placeholder="e.g. 5.5"
@@ -314,36 +368,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="reg-district-input" className="block text-xs font-bold text-slate-700 mb-1">
-                    District
-                  </label>
-                  <input
-                    id="reg-district-input"
-                    type="text"
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    placeholder="District"
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label htmlFor="reg-state-input" className="block text-xs font-bold text-slate-700 mb-1">
-                    State
-                  </label>
-                  <input
-                    id="reg-state-input"
-                    type="text"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
-                  />
-                </div>
-                <div>
                   <label htmlFor="reg-soil-select" className="block text-xs font-bold text-slate-700 mb-1">
                     Soil Type
                   </label>
@@ -359,6 +383,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <option value="Loamy">Loamy Soil (दोमट)</option>
                     <option value="Sandy Loam">Sandy Loam (बलुई दोमट)</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label htmlFor="reg-district-input" className="block text-xs font-bold text-slate-700 mb-1">
+                    District / City <span className="text-rose-500" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="reg-district-input"
+                    type="text"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    placeholder="District"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="reg-state-input" className="block text-xs font-bold text-slate-700 mb-1">
+                    State <span className="text-rose-500" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="reg-state-input"
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. Madhya Pradesh"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#0B6B53]/20 outline-none bg-white shadow-2xs transition-all"
+                  />
                 </div>
               </div>
 
@@ -383,4 +438,3 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
-

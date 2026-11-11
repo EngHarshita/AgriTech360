@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models';
 import { config } from '../config';
@@ -21,11 +22,18 @@ export const generateToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string 
 export const register = async (dto: RegisterDto): Promise<AuthResult> => {
   const normalizedEmail = dto.email.toLowerCase().trim();
 
+  // Reject admin registration from public API
+  if (dto.role === 'admin') {
+    throw ApiError.forbidden('Public registration for administrative accounts is prohibited');
+  }
+
   // 1. Check for duplicate email
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     throw ApiError.conflict('An account with this email address already exists');
   }
+
+  const userRole = 'farmer';
 
   // 2. Instantiate and persist new user (password is automatically hashed via pre-save hook)
   const newUser = new User({
@@ -35,10 +43,10 @@ export const register = async (dto: RegisterDto): Promise<AuthResult> => {
     password: dto.password,
     district: dto.district.trim(),
     state: dto.state.trim(),
-    landHolding: dto.landHolding,
-    soilType: dto.soilType.trim(),
-    irrigationType: dto.irrigationType.trim(),
-    role: dto.role || 'farmer'
+    landHolding: dto.landHolding ?? 0,
+    soilType: dto.soilType?.trim() || '',
+    irrigationType: dto.irrigationType?.trim() || '',
+    role: userRole
   });
 
   const savedUser = await newUser.save();
@@ -74,7 +82,12 @@ export const login = async (dto: LoginDto): Promise<AuthResult> => {
     throw ApiError.unauthorized('Invalid email or password');
   }
 
-  // 3. Generate JWT token
+  // 3. Reject suspended accounts
+  if ((user as any).status === 'suspended') {
+    throw ApiError.forbidden('Your account has been suspended by an administrator. Please contact support.');
+  }
+
+  // 4. Generate JWT token
   const token = generateToken({
     userId: user._id.toString(),
     email: user.email,
@@ -91,6 +104,9 @@ export const login = async (dto: LoginDto): Promise<AuthResult> => {
  * Retrieve user profile by ID
  */
 export const getUserById = async (userId: string): Promise<ISafeUser> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database connection is offline');
+  }
   const user = await User.findById(userId);
   if (!user) {
     throw ApiError.notFound('User profile not found');
