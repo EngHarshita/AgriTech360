@@ -695,9 +695,8 @@ export const mockUsersList: User[] = [
     },
     memberSince: 'April 2024',
   },
-  mockCurrentBuyer,
   {
-    id: 'usr_88922',
+    id: 'usr_88924',
     name: 'Vikramaditya Farms',
     email: 'vikram.farms@krishimail.in',
     phone: '+91 98222 33445',
@@ -767,7 +766,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     action: 'USER_SUSPENDED',
     performedBy: 'usr_admin_001',
     performedByEmail: 'admin@agritech360.internal',
-    targetId: 'usr_88922',
+    targetId: 'usr_88924',
     targetType: 'User',
     details: {
       targetEmail: 'vikram.farms@krishimail.in',
