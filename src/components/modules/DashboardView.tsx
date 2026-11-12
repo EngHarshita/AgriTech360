@@ -16,7 +16,7 @@ import {
   CheckCircle2,
   Bell,
   Clock,
-  ShoppingBag
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -371,25 +371,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             </div>
           </button>
 
-          {/* Action 6: अपनी फसल बेचें */}
+          {/* Action 6: किसान प्रोफ़ाइल व रिकॉर्ड्स */}
           <button
             type="button"
-            onClick={() => onNavigate('client/dashboard')}
-            className="group text-left p-5 sm:p-6 rounded-2xl bg-white border-2 border-purple-100 hover:border-purple-600 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-purple-500/20 flex flex-col justify-between"
+            onClick={() => onNavigate('profile')}
+            className="group text-left p-5 sm:p-6 rounded-2xl bg-white border-2 border-emerald-100 hover:border-emerald-600 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-emerald-500/20 flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-2xs">
-                <ShoppingBag className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-2xs">
+                <UserCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-black text-slate-900 group-hover:text-purple-700 transition-colors">
-                {t('dashboard.actions.sellProduce', 'अपनी फसल बेचें')}
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
+                {isHindi ? 'किसान प्रोफ़ाइल व KCC' : 'Farm Profile & KCC'}
               </h3>
               <p className="text-sm text-slate-600 font-medium mt-2 leading-relaxed">
-                {t('dashboard.actions.sellProduceDesc', 'सीधे सत्यापित खरीदारों और व्यापारियों को अपनी फसल बेचकर बेहतर मुनाफा पाएं।')}
+                {isHindi 
+                  ? 'अपनी भूमि रिकॉर्ड, किसान क्रेडिट कार्ड (KCC) और व्यक्तिगत विवरण सुरक्षित रखें।' 
+                  : 'Manage your farm land records, Kisan Credit Card (KCC) limit, and profile details.'}
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
-              <span>{isHindi ? 'मार्केट देखें' : 'Marketplace'}</span>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
+              <span>{isHindi ? 'प्रोफ़ाइल देखें' : 'View Profile'}</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </button>
