@@ -6,12 +6,12 @@ import {
   updateParcel,
   deleteParcel
 } from '../controllers/farmController';
-import { authenticateJWT } from '../middleware';
+import { authenticateJWT, authorizeRoles, validateCreateParcel, validateUpdateParcel } from '../middleware';
 
 const router = Router();
 
-// Protect all farm routes with JWT authentication
-router.use(authenticateJWT);
+// Protect all farm routes with JWT authentication and require farmer/admin role
+router.use(authenticateJWT, authorizeRoles('farmer', 'admin'));
 
 /**
  * @openapi
@@ -89,7 +89,7 @@ router.use(authenticateJWT);
  */
 router.route('/')
   .get(getParcels)
-  .post(createParcel);
+  .post(validateCreateParcel, createParcel);
 
 /**
  * @openapi
@@ -158,7 +158,7 @@ router.route('/')
  */
 router.route('/:id')
   .get(getParcelById)
-  .put(updateParcel)
+  .put(validateUpdateParcel, updateParcel)
   .delete(deleteParcel);
 
 export default router;

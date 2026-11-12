@@ -28,7 +28,7 @@ export const authenticateJWT = (
     const decoded = jwt.verify(token, config.jwt.secret) as JWTPayload;
     req.user = decoded;
     return next();
-  } catch (error) {
+  } catch {
     return next(ApiError.unauthorized('Invalid or malformed authentication token'));
   }
 };

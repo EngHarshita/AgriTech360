@@ -7,17 +7,30 @@ import {
   mockMandiPrices, 
   mockCropRecommendations, 
   mockGovernmentSchemes, 
-  mockAlerts 
+  mockAlerts,
+  mockFarmParcels,
+  mockAdminOverview,
+  mockUsersList,
+  mockAuditLogs,
+  mockSystemHealth
 } from '../data/mockData';
 import type { 
   User, 
+  UserRole,
   WeatherIntelligence, 
   MandiPriceItem, 
   GovernmentScheme, 
   CropRecommendation, 
   FarmAlert, 
   FarmMetric, 
-  SoilParams 
+  SoilParams,
+  FarmParcel,
+  CreateFarmParcelDto,
+  UpdateFarmParcelDto,
+  AdminOverview,
+  AdminUserFilter,
+  AuditLogEntry,
+  SystemHealthData
 } from '../types';
 
 /**
@@ -26,31 +39,47 @@ import type {
  */
 export const normalizeUser = (raw: any): User => {
   if (!raw) return raw;
-  if (raw.farmDetails && raw.location) {
-    return raw as User;
-  }
+  const role = (raw.role as UserRole) || 'farmer';
+  const businessDetails = (raw.businessDetails || raw.businessName)
+    ? {
+        businessName: raw.businessDetails?.businessName || raw.businessName || '',
+        businessType: raw.businessDetails?.businessType || raw.businessType || '',
+      }
+    : undefined;
+
+  const farmDetails = (role === 'farmer' || raw.farmDetails || raw.landHolding !== undefined)
+    ? {
+        totalAcres: Number(raw.landHolding ?? raw.farmDetails?.totalAcres ?? 0),
+        soilType: raw.soilType || raw.farmDetails?.soilType || 'Black',
+        irrigationType: raw.irrigationType || raw.farmDetails?.irrigationType || 'Drip',
+        primaryCrops: Array.isArray(raw.primaryCrops) 
+          ? raw.primaryCrops 
+          : (Array.isArray(raw.farmDetails?.primaryCrops) ? raw.farmDetails.primaryCrops : []),
+        kisanCreditCardNo: raw.kisanCreditCardNo || raw.farmDetails?.kisanCreditCardNo,
+      }
+    : undefined;
+
   return {
     id: raw.id || raw._id || '',
     name: raw.name || '',
     email: raw.email || '',
     phone: raw.phone || '',
-    avatar: raw.avatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
+    avatar: raw.avatar || (role === 'admin'
+      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80'),
+    role,
+    businessDetails,
     location: {
-      village: raw.village || '',
-      district: raw.district || '',
-      state: raw.state || '',
-      pincode: raw.pincode || '',
+      village: raw.village || raw.location?.village || '',
+      district: raw.district || raw.location?.district || '',
+      state: raw.state || raw.location?.state || '',
+      pincode: raw.pincode || raw.location?.pincode || '',
     },
-    farmDetails: {
-      totalAcres: Number(raw.landHolding ?? raw.totalAcres ?? 0),
-      soilType: raw.soilType || 'Black',
-      irrigationType: raw.irrigationType || 'Drip',
-      primaryCrops: Array.isArray(raw.primaryCrops) ? raw.primaryCrops : [],
-      kisanCreditCardNo: raw.kisanCreditCardNo,
-    },
+    farmDetails,
+    status: raw.status || 'active',
     memberSince: raw.createdAt 
       ? new Date(raw.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      : (raw.memberSince || 'Registered Farmer'),
+      : (raw.memberSince || (role === 'admin' ? 'Platform Administrator' : 'Registered Farmer')),
   };
 };
 
@@ -61,6 +90,10 @@ export const normalizeUser = (raw: any): User => {
  * - When false: executes live HTTP requests against the Express backend and propagates real ApiErrors.
  */
 export const agriService = {
+  get isMockMode(): boolean {
+    return env.useMockData || env.isDemoMode;
+  },
+
   // 1. User Profile Module
   async getUserProfile(): Promise<User> {
     if (env.useMockData) {
@@ -204,6 +237,10 @@ export const agriService = {
   },
 
   async getSchemeById(id: string): Promise<GovernmentScheme | null> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return mockGovernmentSchemes.find((s) => s.id === id) ?? null;
+    }
     const res = await apiClient.get<{ scheme?: GovernmentScheme; data?: GovernmentScheme } | GovernmentScheme>(`/schemes/${encodeURIComponent(id)}`);
     if ('id' in res.data) return res.data as GovernmentScheme;
     if (res.data && 'scheme' in res.data) return res.data.scheme!;
@@ -212,11 +249,19 @@ export const agriService = {
   },
 
   async toggleBookmarkScheme(id: string): Promise<{ success: boolean; isBookmarked: boolean; bookmarkCount: number }> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return { success: true, isBookmarked: true, bookmarkCount: 1 };
+    }
     const res = await apiClient.post<{ success: boolean; isBookmarked: boolean; bookmarkCount: number }>(`/schemes/${encodeURIComponent(id)}/bookmark`);
     return res.data;
   },
 
   async checkSchemeEligibility(id: string): Promise<{ eligible: boolean; status: string; reasons: string[] }> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return { eligible: true, status: 'Eligible', reasons: ['Demo evaluation — live eligibility check requires backend connection.'] };
+    }
     const res = await apiClient.post<{ eligible: boolean; status: string; reasons: string[] }>(`/schemes/${encodeURIComponent(id)}/check-eligibility`);
     return res.data;
   },
@@ -233,27 +278,167 @@ export const agriService = {
   },
 
   // 8. Farm & Field Parcel Management Module (Exposes backend /farms CRUD)
-  async getFarmParcels(): Promise<any[]> {
+  async getFarmParcels(): Promise<FarmParcel[]> {
     if (env.useMockData) {
       await new Promise((resolve) => setTimeout(resolve, 200));
-      return [];
+      const saved = localStorage.getItem('agritech_mock_parcels');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          // ignore parse error and fall through
+        }
+      }
+      return mockFarmParcels;
     }
     const res = await apiClient.get<any>('/farms');
     return res.data?.parcels || res.data?.data || (Array.isArray(res.data) ? res.data : []);
   },
 
-  async createFarmParcel(parcelData: any): Promise<any> {
+  async createFarmParcel(parcelData: CreateFarmParcelDto): Promise<FarmParcel> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const current = await this.getFarmParcels();
+      const newParcel: FarmParcel = {
+        id: `parcel_${Date.now()}`,
+        farmerId: mockCurrentUser.id,
+        name: parcelData.name,
+        surveyNumber: parcelData.surveyNumber || '',
+        village: parcelData.village || mockCurrentUser.location.village,
+        district: parcelData.district || mockCurrentUser.location.district,
+        state: parcelData.state || mockCurrentUser.location.state,
+        areaAcres: Number(parcelData.areaAcres),
+        soilType: parcelData.soilType || 'Black Soil',
+        irrigationType: parcelData.irrigationType || 'Drip Irrigation',
+        currentCrop: parcelData.currentCrop || 'Soybean',
+        croppingSeason: parcelData.croppingSeason || 'Kharif 2026',
+        status: parcelData.status || 'Active Cultivation',
+        createdAt: new Date().toISOString(),
+      };
+      const updated = [newParcel, ...current];
+      localStorage.setItem('agritech_mock_parcels', JSON.stringify(updated));
+      return newParcel;
+    }
     const res = await apiClient.post<any>('/farms', parcelData);
     return res.data?.parcel || res.data?.data || res.data;
   },
 
-  async updateFarmParcel(id: string, parcelData: any): Promise<any> {
+  async updateFarmParcel(id: string, parcelData: UpdateFarmParcelDto): Promise<FarmParcel> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const current = await this.getFarmParcels();
+      const index = current.findIndex((p) => p.id === id);
+      if (index === -1) throw new Error('Farm parcel not found');
+      const updatedParcel: FarmParcel = {
+        ...current[index],
+        ...parcelData,
+        areaAcres: parcelData.areaAcres !== undefined ? Number(parcelData.areaAcres) : current[index].areaAcres,
+        updatedAt: new Date().toISOString(),
+      };
+      current[index] = updatedParcel;
+      localStorage.setItem('agritech_mock_parcels', JSON.stringify(current));
+      return updatedParcel;
+    }
     const res = await apiClient.put<any>(`/farms/${encodeURIComponent(id)}`, parcelData);
     return res.data?.parcel || res.data?.data || res.data;
   },
 
-  async deleteFarmParcel(id: string): Promise<any> {
+  async deleteFarmParcel(id: string): Promise<{ success: boolean; message: string }> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const current = await this.getFarmParcels();
+      const filtered = current.filter((p) => p.id !== id);
+      localStorage.setItem('agritech_mock_parcels', JSON.stringify(filtered));
+      return { success: true, message: 'Farm parcel removed successfully' };
+    }
     const res = await apiClient.delete<any>(`/farms/${encodeURIComponent(id)}`);
     return res.data;
+  },
+
+  // 12. Admin Control Panel Module
+  async getAdminOverview(): Promise<AdminOverview> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return mockAdminOverview;
+    }
+    const res = await apiClient.get<any>('/admin/overview');
+    return res.data?.data || res.data;
+  },
+
+  async getAdminUsers(params: AdminUserFilter = {}): Promise<{ users: User[]; total: number; page: number; pages: number }> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      let filtered = [...mockUsersList];
+      if (params.role && params.role !== 'all') {
+        filtered = filtered.filter((u) => u.role === params.role);
+      }
+      if (params.status && params.status !== 'all') {
+        filtered = filtered.filter((u) => (u.status || 'active') === params.status);
+      }
+      if (params.search && params.search.trim()) {
+        const s = params.search.toLowerCase();
+        filtered = filtered.filter((u) =>
+          u.name.toLowerCase().includes(s) ||
+          u.email.toLowerCase().includes(s) ||
+          u.phone.includes(s)
+        );
+      }
+      const page = params.page || 1;
+      const limit = params.limit || 10;
+      const total = filtered.length;
+      const paged = filtered.slice((page - 1) * limit, page * limit);
+      return { users: paged, total, page, pages: Math.ceil(total / limit) || 1 };
+    }
+
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.set('page', params.page.toString());
+    if (params.limit) queryParams.set('limit', params.limit.toString());
+    if (params.search) queryParams.set('search', params.search);
+    if (params.role && params.role !== 'all') queryParams.set('role', params.role);
+    if (params.status && params.status !== 'all') queryParams.set('status', params.status);
+
+    const res = await apiClient.get<any>(`/admin/users?${queryParams.toString()}`);
+    const rawUsers = res.data?.users || res.data?.data || [];
+    return {
+      users: rawUsers.map((u: any) => normalizeUser(u)),
+      total: res.data?.total ?? rawUsers.length,
+      page: res.data?.page ?? 1,
+      pages: res.data?.pages ?? 1,
+    };
+  },
+
+  async updateUserStatus(userId: string, status: 'active' | 'suspended', reason?: string): Promise<User> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const user = mockUsersList.find((u) => u.id === userId);
+      if (!user) throw new Error('User not found');
+      user.status = status;
+      return user;
+    }
+
+    const res = await apiClient.patch<any>(`/admin/users/${encodeURIComponent(userId)}/status`, {
+      status,
+      reason,
+    });
+    const raw = res.data?.user || res.data?.data;
+    return normalizeUser(raw);
+  },
+
+  async getAdminLogs(limit = 50): Promise<AuditLogEntry[]> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return mockAuditLogs.slice(0, limit);
+    }
+    const res = await apiClient.get<any>(`/admin/logs?limit=${limit}`);
+    return res.data?.data || res.data || [];
+  },
+
+  async getAdminSystemHealth(): Promise<SystemHealthData> {
+    if (env.useMockData) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return mockSystemHealth;
+    }
+    const res = await apiClient.get<any>('/admin/health');
+    return res.data?.data || res.data;
   },
 };

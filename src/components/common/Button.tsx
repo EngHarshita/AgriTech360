@@ -6,6 +6,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,6 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   leftIcon,
   rightIcon,
+  icon,
   className = '',
   disabled,
   ...props
@@ -72,7 +74,7 @@ export const Button: React.FC<ButtonProps> = ({
           ></path>
         </svg>
       ) : (
-        leftIcon
+        leftIcon || icon
       )}
       {children}
       {!isLoading && rightIcon}

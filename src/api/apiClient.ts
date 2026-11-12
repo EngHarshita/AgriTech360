@@ -20,7 +20,10 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(env.authTokenKey);
-    if (token && config.headers) {
+    // Sanitize any invalid or fake tokens
+    if (token && token.startsWith('mock-')) {
+      localStorage.removeItem(env.authTokenKey);
+    } else if (token && token !== 'undefined' && token !== 'null' && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 

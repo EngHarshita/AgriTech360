@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { MandiPrice } from '../models';
 import { initialMandiPricesData } from '../data/seedMandiPricesData';
 import { logger } from '../utils/logger';
@@ -12,6 +13,11 @@ import {
  * Seed MongoDB collection with realistic Indian APMC market prices if empty
  */
 export const seedMandiDatabase = async (force: boolean = false): Promise<number> => {
+  if (mongoose.connection.readyState !== 1) {
+    logger.warn('Cannot seed Mandi database: MongoDB is not connected.');
+    return initialMandiPricesData.length;
+  }
+
   const currentCount = await MandiPrice.countDocuments();
   if (currentCount > 0 && !force) {
     logger.debug(`MandiPrice collection already populated (${currentCount} records). Skipping seed.`);
@@ -29,21 +35,72 @@ export const seedMandiDatabase = async (force: boolean = false): Promise<number>
 };
 
 /**
- * Query Mandi prices with search, category/state filtering, and pagination
+ * Query Mandi prices with search, category/state filtering, and pagination.
+ * If MongoDB is offline, gracefully serves from the 88-record APMC seed catalog in resilient degraded mode.
  */
 export const getMandiPrices = async (
   queryParams: MandiPriceQueryParams
 ): Promise<MandiPricesResponse> => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const { q, category, state } = queryParams;
+  const page = Math.max(1, parseInt(String(queryParams.page || '1'), 10));
+  const limit = Math.max(1, Math.min(100, parseInt(String(queryParams.limit || '20'), 10)));
+  const skip = (page - 1) * limit;
+
+  if (!isDbConnected) {
+    logger.info('MongoDB offline: serving Mandi prices in resilient degraded in-memory mode.');
+    let filtered = initialMandiPricesData.map((item, idx) => ({
+      ...item,
+      id: `mandi_seeded_${idx + 1}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })) as IMandiPrice[];
+
+    if (q && q.trim().length > 0) {
+      const searchLower = q.trim().toLowerCase();
+      filtered = filtered.filter((item) =>
+        item.commodity.toLowerCase().includes(searchLower) ||
+        item.market.toLowerCase().includes(searchLower) ||
+        item.district.toLowerCase().includes(searchLower) ||
+        item.state.toLowerCase().includes(searchLower) ||
+        item.variety.toLowerCase().includes(searchLower) ||
+        (item.hindiName && item.hindiName.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (category && category !== 'All' && category.trim().length > 0) {
+      filtered = filtered.filter((item) => item.category.toLowerCase() === category.trim().toLowerCase());
+    }
+
+    if (state && state !== 'All' && state.trim().length > 0) {
+      filtered = filtered.filter((item) => item.state.toLowerCase() === state.trim().toLowerCase());
+    }
+
+    filtered.sort((a, b) => b.modalPrice - a.modalPrice);
+    const total = filtered.length;
+    const paginated = filtered.slice(skip, skip + limit);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      success: true,
+      prices: paginated,
+      data: paginated,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
   // Ensure collection has initial records
   const count = await MandiPrice.countDocuments();
   if (count === 0) {
     await seedMandiDatabase();
   }
-
-  const { q, category, state } = queryParams;
-  const page = Math.max(1, parseInt(String(queryParams.page || '1'), 10));
-  const limit = Math.max(1, Math.min(100, parseInt(String(queryParams.limit || '20'), 10)));
-  const skip = (page - 1) * limit;
 
   // Build MongoDB query filter
   const filter: Record<string, unknown> = {};
@@ -99,7 +156,8 @@ export const getMandiPrices = async (
 };
 
 /**
- * Calculate estimated crop revenue based on APMC modal rates and Government MSP
+ * Calculate estimated crop revenue based on APMC modal rates and Government MSP.
+ * If MongoDB is offline, looks up benchmark rates from the in-memory seed catalog.
  */
 export const estimateCropRevenue = async (
   commodityName: string,
@@ -108,6 +166,35 @@ export const estimateCropRevenue = async (
 ): Promise<RevenueEstimationResult> => {
   const normalizedCommodity = commodityName.trim();
   const quantity = Math.max(0.1, Number(quantityQtl) || 50);
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  if (!isDbConnected) {
+    const matching =
+      initialMandiPricesData.find((p) => p.commodity.toLowerCase() === normalizedCommodity.toLowerCase()) ||
+      initialMandiPricesData.find((p) => p.commodity.toLowerCase().includes(normalizedCommodity.toLowerCase()));
+
+    const modalPrice = customPricePerQtl && customPricePerQtl > 0
+      ? customPricePerQtl
+      : matching?.modalPrice || 2850;
+
+    const msp = matching?.msp || (modalPrice > 2000 ? Math.round(modalPrice * 0.85) : 0);
+    const estimatedGrossRevenue = Math.round(quantity * modalPrice);
+    const mspGrossRevenue = Math.round(quantity * msp);
+    const netGainOverMsp = estimatedGrossRevenue - mspGrossRevenue;
+
+    return {
+      commodity: matching?.commodity || normalizedCommodity,
+      quantityQtl: quantity,
+      modalPricePerQtl: modalPrice,
+      estimatedGrossRevenue,
+      mspPerQtl: msp,
+      mspGrossRevenue,
+      netGainOverMsp,
+      market: matching?.market || 'Regional APMC Benchmark',
+      district: matching?.district || 'Benchmark District',
+      state: matching?.state || 'Maharashtra'
+    };
+  }
 
   // Look up latest benchmark record for commodity
   let priceRecord = await MandiPrice.findOne({

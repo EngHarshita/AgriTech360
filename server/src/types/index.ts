@@ -37,6 +37,11 @@ export interface IEnvConfig {
 export type UserRole = 'farmer' | 'expert' | 'buyer' | 'admin';
 
 /**
+ * Permitted User Account Lifecycle Statuses
+ */
+export type UserStatus = 'active' | 'suspended';
+
+/**
  * Core User Attributes
  */
 export interface IUser {
@@ -46,10 +51,13 @@ export interface IUser {
   password: string;
   district: string;
   state: string;
-  landHolding: number;
-  soilType: string;
-  irrigationType: string;
+  landHolding?: number;
+  soilType?: string;
+  irrigationType?: string;
+  businessName?: string;
+  businessType?: string;
   role: UserRole;
+  status?: UserStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -64,12 +72,70 @@ export interface ISafeUser {
   phone: string;
   district: string;
   state: string;
-  landHolding: number;
-  soilType: string;
-  irrigationType: string;
+  landHolding?: number;
+  soilType?: string;
+  irrigationType?: string;
+  businessName?: string;
+  businessType?: string;
   role: UserRole;
+  status: UserStatus;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+/**
+ * Admin System Overview Metrics DTO
+ */
+export interface AdminOverviewDto {
+  totalUsers: number;
+  totalFarmers: number;
+  totalBuyers: number;
+  totalAdmins: number;
+  activeUsers: number;
+  suspendedUsers: number;
+  totalParcels: number;
+  activeCultivationParcels: number;
+  totalLandAcres: number;
+  totalSchemes: number;
+  totalMandiRecords: number;
+  databaseStatus: 'connected' | 'disconnected' | 'degraded';
+  systemUptimeSeconds: number;
+  nodeVersion: string;
+  memoryUsageMb: number;
+}
+
+/**
+ * Admin User Query Filters DTO
+ */
+export interface AdminUserFilterQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: UserRole | 'all';
+  status?: UserStatus | 'all';
+}
+
+/**
+ * Update User Status DTO
+ */
+export interface UpdateUserStatusDto {
+  status: UserStatus;
+  reason?: string;
+}
+
+/**
+ * Platform Audit Log Entity
+ */
+export interface IAuditLog {
+  id: string;
+  action: string;
+  performedBy: string;
+  performedByEmail: string;
+  targetId?: string;
+  targetType?: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  timestamp: string;
 }
 
 /**
@@ -96,9 +162,11 @@ export interface RegisterDto {
   password: string;
   district: string;
   state: string;
-  landHolding: number;
-  soilType: string;
-  irrigationType: string;
+  landHolding?: number;
+  soilType?: string;
+  irrigationType?: string;
+  businessName?: string;
+  businessType?: string;
   role?: UserRole;
 }
 
@@ -121,6 +189,8 @@ export interface UpdateProfileDto {
   landHolding?: number;
   soilType?: string;
   irrigationType?: string;
+  businessName?: string;
+  businessType?: string;
 }
 
 /**

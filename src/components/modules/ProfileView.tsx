@@ -12,17 +12,21 @@ import {
   UserCheck,
   CreditCard,
   Layers,
-  Award
+  Award,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, CardContent } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { mockCurrentUser } from '../../data/mockData';
+import { env } from '../../config/env';
 
 export const ProfileView: React.FC = () => {
   const { user, updateUser, login } = useAuth();
+  const { setLanguage, isHindi } = useLanguage();
   const { showToast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -35,10 +39,10 @@ export const ProfileView: React.FC = () => {
   const [district, setDistrict] = useState(user?.location.district || '');
   const [state, setState] = useState(user?.location.state || '');
   const [pincode, setPincode] = useState(user?.location.pincode || '');
-  const [acres, setAcres] = useState(user?.farmDetails.totalAcres.toString() || '12.5');
-  const [soilType, setSoilType] = useState(user?.farmDetails.soilType || 'Black');
-  const [irrigationType, setIrrigationType] = useState(user?.farmDetails.irrigationType || 'Drip');
-  const [kcc, setKcc] = useState(user?.farmDetails.kisanCreditCardNo || 'KCC-MP-492019-X');
+  const [acres, setAcres] = useState(user?.farmDetails?.totalAcres?.toString() || '12.5');
+  const [soilType, setSoilType] = useState(user?.farmDetails?.soilType || 'Black');
+  const [irrigationType, setIrrigationType] = useState(user?.farmDetails?.irrigationType || 'Drip');
+  const [kcc, setKcc] = useState(user?.farmDetails?.kisanCreditCardNo || 'KCC-MP-492019-X');
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,17 +58,19 @@ export const ProfileView: React.FC = () => {
         state,
         pincode,
       },
-      farmDetails: {
-        ...user.farmDetails,
-        totalAcres: parseFloat(acres) || 10,
-        soilType: soilType as any,
-        irrigationType: irrigationType as any,
-        kisanCreditCardNo: kcc,
-      },
+      farmDetails: user.farmDetails
+        ? {
+            totalAcres: parseFloat(acres) || 10,
+            soilType: soilType as any,
+            irrigationType: irrigationType as any,
+            primaryCrops: user.farmDetails.primaryCrops || ['Soybean', 'Wheat'],
+            kisanCreditCardNo: kcc,
+          }
+        : undefined,
     });
 
     setIsEditing(false);
-    showToast('Farm records successfully updated in local registry and database', 'success');
+    showToast('Records successfully updated in local registry and database', 'success');
   };
 
   const handleSwitchToDemo = async () => {
@@ -76,10 +82,10 @@ export const ProfileView: React.FC = () => {
     setDistrict(mockCurrentUser.location.district);
     setState(mockCurrentUser.location.state);
     setPincode(mockCurrentUser.location.pincode);
-    setAcres(mockCurrentUser.farmDetails.totalAcres.toString());
-    setSoilType(mockCurrentUser.farmDetails.soilType);
-    setIrrigationType(mockCurrentUser.farmDetails.irrigationType);
-    setKcc(mockCurrentUser.farmDetails.kisanCreditCardNo || '');
+    setAcres(mockCurrentUser.farmDetails?.totalAcres?.toString() || '12.5');
+    setSoilType(mockCurrentUser.farmDetails?.soilType || 'Black');
+    setIrrigationType(mockCurrentUser.farmDetails?.irrigationType || 'Drip');
+    setKcc(mockCurrentUser.farmDetails?.kisanCreditCardNo || '');
     showToast('Switched to default Capstone demo farmer profile', 'info');
   };
 
@@ -100,7 +106,9 @@ export const ProfileView: React.FC = () => {
             <h1 className="text-2xl font-black tracking-tight text-slate-900">
               Farmer & Land Profile
             </h1>
-            <Badge variant="success" size="sm" dot>Kisan Agristack Verified</Badge>
+            <Badge variant={env.useMockData ? 'warning' : 'success'} size="sm" dot>
+              {env.useMockData ? 'Demo Farm Profile' : 'Kisan Agristack Verified'}
+            </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
             Manage your registered land acreage, irrigation infrastructure, and soil classification records.
@@ -108,14 +116,16 @@ export const ProfileView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSwitchToDemo}
-            leftIcon={<UserCheck className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />}
-          >
-            Reset Demo Farm
-          </Button>
+          {(env.useMockData || env.isDemoMode) && env.environment !== 'production' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSwitchToDemo}
+              leftIcon={<UserCheck className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />}
+            >
+              Reset Demo Farm
+            </Button>
+          )}
           <Button
             variant={isEditing ? 'outline' : 'primary'}
             size="sm"
@@ -175,7 +185,7 @@ export const ProfileView: React.FC = () => {
               <CreditCard className="w-3 h-3 text-[#0B6B53]" /> Kisan Credit Card (KCC)
             </span>
             <span className="text-sm font-black text-[#0B6B53] mt-0.5 block tracking-tight">
-              {user.farmDetails.kisanCreditCardNo || 'Registered (KCC-Active)'}
+              {user.farmDetails?.kisanCreditCardNo || (user.role === 'admin' ? 'Administrator Verified' : 'Registered (KCC-Active)')}
             </span>
             <span className="text-[10px] text-slate-500 font-medium mt-0.5 block">Credit Limit: ₹3,00,000 @ 4%</span>
           </div>
@@ -390,93 +400,186 @@ export const ProfileView: React.FC = () => {
           </Card>
         </form>
       ) : (
-        /* Land Statistics & Farm Information Section */
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Land Holding */}
-          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
-            <CardHeader
-              title="Registered Farm Land"
-              subtitle="Agricultural Survey Parcel"
-              icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
-            />
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900 tracking-tight">{user.farmDetails.totalAcres}</span>
-                <span className="text-sm font-bold text-slate-500">Total Acres</span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Registered under PM-KISAN Portal and State Bhulekh Digital Land Records.
-              </p>
-              <div className="pt-2 flex items-center gap-2">
-                <Badge variant="success" size="sm">Title Clean & Freehold</Badge>
-                <span className="text-[11px] font-semibold text-slate-400">Parcel #142/3</span>
-              </div>
-            </CardContent>
-          </Card>
+        /* Role-specific details Section */
+        user.farmDetails ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Land Holding */}
+              <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
+                <CardHeader
+                  title="Registered Farm Land"
+                  subtitle="Agricultural Survey Parcel"
+                  icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
+                />
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-slate-900 tracking-tight">{user.farmDetails.totalAcres}</span>
+                    <span className="text-sm font-bold text-slate-500">Total Acres</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    Registered under PM-KISAN Portal and State Bhulekh Digital Land Records.
+                  </p>
+                  <div className="pt-2 flex items-center gap-2">
+                    <Badge variant="success" size="sm">Title Clean & Freehold</Badge>
+                    <span className="text-[11px] font-semibold text-slate-400">Parcel #142/3</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Card 2: Soil Classification */}
-          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
-            <CardHeader
-              title="Soil Classification"
-              subtitle="Regur / Deep Black Soil"
-              icon={<ShieldCheck className="w-5 h-5 text-[#F5B642]" aria-hidden="true" />}
-            />
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.soilType} Soil</span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                High clay content, excellent moisture retention. Optimal for Soybean, Cotton, and Sharbati Wheat.
-              </p>
-              <div className="pt-2 flex items-center gap-2">
-                <Badge variant="accent" size="sm">Soil Card Valid (2026)</Badge>
-                <span className="text-[11px] font-semibold text-slate-400">pH 7.2 Balanced</span>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Card 2: Soil Classification */}
+              <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
+                <CardHeader
+                  title="Soil Classification"
+                  subtitle="Regur / Deep Black Soil"
+                  icon={<ShieldCheck className="w-5 h-5 text-[#F5B642]" aria-hidden="true" />}
+                />
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.soilType} Soil</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    High clay content, excellent moisture retention. Optimal for Soybean, Cotton, and Sharbati Wheat.
+                  </p>
+                  <div className="pt-2 flex items-center gap-2">
+                    <Badge variant="accent" size="sm">Soil Card Valid (2026)</Badge>
+                    <span className="text-[11px] font-semibold text-slate-400">pH 7.2 Balanced</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Card 3: Irrigation System */}
-          <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
-            <CardHeader
-              title="Irrigation Infrastructure"
-              subtitle="Water Source & Delivery"
-              icon={<Droplet className="w-5 h-5 text-sky-600" aria-hidden="true" />}
-            />
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.irrigationType}</span>
-                <span className="text-xs text-[#0B6B53] font-bold">+ Borewell</span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Micro-irrigation enabled with PMKSY subsidy. Delivers high water efficiency (90%+).
-              </p>
-              <div className="pt-2 flex items-center gap-2">
-                <Badge variant="info" size="sm">70% Water Saved</Badge>
-                <span className="text-[11px] font-semibold text-slate-400">Solar Pump Tied</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Card 3: Irrigation System */}
+              <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white hover:border-[#0B6B53]/30 transition-all">
+                <CardHeader
+                  title="Irrigation Infrastructure"
+                  subtitle="Water Source & Delivery"
+                  icon={<Droplet className="w-5 h-5 text-sky-600" aria-hidden="true" />}
+                />
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-slate-900 tracking-tight">{user.farmDetails.irrigationType}</span>
+                    <span className="text-xs text-[#0B6B53] font-bold">+ Borewell</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    Micro-irrigation enabled with PMKSY subsidy. Delivers high water efficiency (90%+).
+                  </p>
+                  <div className="pt-2 flex items-center gap-2">
+                    <Badge variant="info" size="sm">70% Water Saved</Badge>
+                    <span className="text-[11px] font-semibold text-slate-400">Solar Pump Tied</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Primary Crops Cultivated Section */}
+            <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
+              <CardHeader
+                title="Primary Crop Rotation Cycle"
+                subtitle="Registered Cultivars for 2026 Season"
+                icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
+              />
+              <CardContent className="p-5">
+                <div className="flex flex-wrap gap-2.5">
+                  {(user.farmDetails.primaryCrops || ['Soybean', 'Wheat']).map((crop, idx) => (
+                    <div
+                      key={idx}
+                      className="px-4 py-2 rounded-xl bg-[#F5F7F6] border border-black/[0.06] text-xs font-bold text-slate-800 flex items-center gap-2 shadow-2xs hover:border-[#0B6B53]/30 transition-all"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#0B6B53]" aria-hidden="true" />
+                      {crop}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          /* Administrative Profile Section */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
+              <CardHeader
+                title="System Administration"
+                subtitle="Platform Governance Profile"
+                icon={<ShieldCheck className="w-5 h-5 text-rose-600" aria-hidden="true" />}
+              />
+              <CardContent className="p-5 space-y-3">
+                <div className="text-xl font-black text-slate-900">
+                  {user.name} (Administrator)
+                </div>
+                <div className="text-sm font-semibold text-slate-600">
+                  Role: <span className="text-rose-600 font-bold">Platform Governance Operator</span>
+                </div>
+                <Badge variant="danger" size="sm">Admin Authorized</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
+              <CardHeader
+                title="Governance Operations"
+                subtitle="Connected Control Center"
+                icon={<Droplet className="w-5 h-5 text-emerald-600" aria-hidden="true" />}
+              />
+              <CardContent className="p-5 space-y-3">
+                <div className="text-sm text-slate-600 leading-relaxed font-medium">
+                  Direct supervisory access across farmer field registries, telemetry feeds, and APMC market prices.
+                </div>
+                <Badge variant="success" size="sm">Full Agricultural Stack Control</Badge>
+              </CardContent>
+            </Card>
+          </div>
+        )
       )}
 
-      {/* Primary Crops Cultivated Section */}
+      {/* Language & Regional Preferences (Requirement 1: Allow users to change language anytime from settings) */}
       <Card className="border border-black/[0.06] shadow-soft rounded-2xl bg-white">
         <CardHeader
-          title="Primary Crop Rotation Cycle"
-          subtitle="Registered Cultivars for 2026 Season"
-          icon={<Sprout className="w-5 h-5 text-[#0B6B53]" aria-hidden="true" />}
+          title={isHindi ? "भाषा और क्षेत्रीय प्राथमिकताएं" : "Language & Regional Preferences"}
+          subtitle={isHindi ? "अपनी पसंदीदा भाषा चुनें (हिंदी / English)" : "Choose your primary portal display language"}
+          icon={<Globe className="w-5 h-5 text-[#0B6B53]" />}
         />
-        <CardContent className="p-5">
-          <div className="flex flex-wrap gap-2.5">
-            {user.farmDetails.primaryCrops.map((crop, idx) => (
-              <div
-                key={idx}
-                className="px-4 py-2 rounded-xl bg-[#F5F7F6] border border-black/[0.06] text-xs font-bold text-slate-800 flex items-center gap-2 shadow-2xs hover:border-[#0B6B53]/30 transition-all"
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-sm font-bold text-slate-800 block">
+                {isHindi ? 'पोर्टल भाषा' : 'Display Language'}
+              </span>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                {isHindi 
+                  ? 'सभी बटन, फॉर्म, मौसम और मंडी भाव चुनी हुई भाषा में प्रदर्शित होंगे।' 
+                  : 'All navigation, dashboards, and farmer tools will switch immediately.'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('hi');
+                  showToast('भाषा बदलकर हिंदी कर दी गई है', 'success');
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isHindi 
+                    ? 'bg-[#0B6B53] text-white shadow-md shadow-[#0B6B53]/20 ring-2 ring-[#0B6B53]/30' 
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
               >
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0B6B53]" aria-hidden="true" />
-                {crop}
-              </div>
-            ))}
+                <span>हिंदी (Hindi)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('en');
+                  showToast('Language set to English', 'success');
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  !isHindi 
+                    ? 'bg-[#0B6B53] text-white shadow-md shadow-[#0B6B53]/20 ring-2 ring-[#0B6B53]/30' 
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <span>English</span>
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

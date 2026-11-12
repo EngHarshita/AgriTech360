@@ -21,7 +21,21 @@ app.use(
 // 2. Cross-Origin Resource Sharing
 app.use(
   cors({
-    origin: config.corsOrigin === '*' ? '*' : [config.corsOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, postman, automated health-checks)
+      if (!origin) return callback(null, true);
+      const allowedOrigins = [
+        config.corsOrigin,
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+      ].filter(Boolean);
+      if (config.corsOrigin === '*' || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [

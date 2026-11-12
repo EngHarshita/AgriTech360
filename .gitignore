@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# ── Environment variables ────────────────────────────────────────────────────
+# Never commit local .env files; safe example templates ARE tracked.
+.env
+.env.local
+.env.*.local
+# Allow example templates to remain tracked:
+!.env.example
+!server/.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -19,7 +19,7 @@ export const getParcels = asyncHandler(
       throw ApiError.unauthorized('Authentication required to access farm parcels');
     }
 
-    const result = await farmService.getFarmerParcels(req.user.userId);
+    const result = await farmService.getFarmerParcels(req.user.userId, req.user.role);
     res.status(200).json(result);
   }
 );
@@ -39,7 +39,7 @@ export const getParcelById = asyncHandler(
       throw ApiError.badRequest('Farm parcel ID is required');
     }
 
-    const parcel = await farmService.getParcelById(id, req.user.userId);
+    const parcel = await farmService.getParcelById(id, req.user.userId, req.user.role);
     const response: FarmParcelDetailResponse = {
       success: true,
       parcel,

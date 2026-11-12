@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { User } from '../models';
 import { ApiError } from '../utils/apiError';
 import { ISafeUser, UpdateProfileDto } from '../types';
@@ -6,6 +7,9 @@ import { ISafeUser, UpdateProfileDto } from '../types';
  * Fetch authenticated farmer profile by User ID
  */
 export const getFarmerProfile = async (userId: string): Promise<ISafeUser> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database connection is offline');
+  }
   const user = await User.findById(userId);
   if (!user) {
     throw ApiError.notFound('Farmer profile not found');
@@ -21,6 +25,9 @@ export const updateFarmerProfile = async (
   userId: string,
   dto: UpdateProfileDto
 ): Promise<ISafeUser> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database connection is offline');
+  }
   const user = await User.findById(userId);
   if (!user) {
     throw ApiError.notFound('Farmer profile not found');
@@ -47,6 +54,12 @@ export const updateFarmerProfile = async (
   }
   if (dto.irrigationType !== undefined) {
     user.irrigationType = dto.irrigationType.trim();
+  }
+  if (dto.businessName !== undefined) {
+    user.businessName = dto.businessName.trim();
+  }
+  if (dto.businessType !== undefined) {
+    user.businessType = dto.businessType.trim();
   }
 
   const updatedUser = await user.save();

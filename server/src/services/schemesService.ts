@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { GovernmentScheme, User } from '../models';
 import { initialSchemesData } from '../data/seedSchemesData';
 import { ApiError } from '../utils/apiError';
@@ -14,6 +15,11 @@ import {
  * Seed MongoDB collection with realistic Indian agriculture schemes
  */
 export const seedSchemesDatabase = async (force: boolean = false): Promise<number> => {
+  if (mongoose.connection.readyState !== 1) {
+    logger.warn('Cannot seed schemes database: MongoDB is not connected.');
+    return initialSchemesData.length;
+  }
+
   const currentCount = await GovernmentScheme.countDocuments();
   if (currentCount > 0 && !force) {
     logger.debug(`GovernmentScheme collection already populated (${currentCount} records). Skipping seed.`);
@@ -31,23 +37,70 @@ export const seedSchemesDatabase = async (force: boolean = false): Promise<numbe
 };
 
 /**
- * Retrieve Government Schemes with category filtering, search, and pagination
+ * Retrieve Government Schemes with category filtering, search, and pagination.
+ * If MongoDB is offline, serves from the 26-scheme catalog in resilient degraded mode.
  */
 export const getSchemes = async (
   queryParams: SchemeQueryParams,
   userId?: string
 ): Promise<SchemesResponse> => {
-  // Auto-seed if database is empty
-  const count = await GovernmentScheme.countDocuments();
-  if (count === 0) {
-    await seedSchemesDatabase();
-  }
-
+  const isDbConnected = mongoose.connection.readyState === 1;
   const search = queryParams.search || queryParams.q;
   const category = queryParams.category;
   const page = Math.max(1, parseInt(String(queryParams.page || '1'), 10));
   const limit = Math.max(1, Math.min(100, parseInt(String(queryParams.limit || '20'), 10)));
   const skip = (page - 1) * limit;
+
+  if (!isDbConnected) {
+    logger.info('MongoDB offline: serving Government schemes in resilient degraded in-memory mode.');
+    let filtered = initialSchemesData.map((item, idx) => ({
+      ...item,
+      id: `scheme_seeded_${idx + 1}`,
+      isBookmarked: false,
+      bookmarkCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })) as IGovernmentScheme[];
+
+    if (category && category !== 'All' && category.trim().length > 0) {
+      filtered = filtered.filter((s) => s.category.toLowerCase() === category.trim().toLowerCase());
+    }
+
+    if (search && search.trim().length > 0) {
+      const searchLower = search.trim().toLowerCase();
+      filtered = filtered.filter((s) =>
+        s.title.toLowerCase().includes(searchLower) ||
+        (s.shortCode && s.shortCode.toLowerCase().includes(searchLower)) ||
+        s.description.toLowerCase().includes(searchLower) ||
+        (s.department && s.department.toLowerCase().includes(searchLower)) ||
+        s.category.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const total = filtered.length;
+    const paginated = filtered.slice(skip, skip + limit);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      success: true,
+      schemes: paginated,
+      data: paginated,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  // Auto-seed if database is empty
+  const count = await GovernmentScheme.countDocuments();
+  if (count === 0) {
+    await seedSchemesDatabase();
+  }
 
   const filter: Record<string, unknown> = {};
 
@@ -95,12 +148,35 @@ export const getSchemes = async (
 };
 
 /**
- * Retrieve single scheme details by ID or ShortCode
+ * Retrieve single scheme details by ID or ShortCode.
+ * If MongoDB is offline, resolves from the in-memory seed catalog.
  */
 export const getSchemeById = async (
   idOrShortCode: string,
   userId?: string
 ): Promise<IGovernmentScheme> => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  if (!isDbConnected) {
+    const scheme = initialSchemesData.find((s) =>
+      (s.shortCode && s.shortCode.toLowerCase() === idOrShortCode.toLowerCase()) ||
+      s.title.toLowerCase() === idOrShortCode.toLowerCase()
+    );
+
+    if (!scheme) {
+      throw ApiError.notFound(`Government scheme [${idOrShortCode}] not found`);
+    }
+
+    return {
+      ...scheme,
+      id: scheme.shortCode || 'seeded_scheme',
+      isBookmarked: false,
+      bookmarkCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as IGovernmentScheme;
+  }
+
   let scheme = null;
 
   // Try finding by MongoDB ObjectId if valid

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FarmParcel, User } from '../models';
 import { ApiError } from '../utils/apiError';
 import { logger } from '../utils/logger';
@@ -12,11 +13,25 @@ import {
  * Retrieve all farm parcels for an authenticated farmer.
  * If farmer has no parcels yet, auto-initializes a default parcel based on their registered profile.
  */
-export const getFarmerParcels = async (userId: string): Promise<FarmParcelsResponse> => {
-  let parcels = await FarmParcel.find({ farmerId: userId }).sort({ createdAt: -1 });
+export const getFarmerParcels = async (userId: string, role?: string): Promise<FarmParcelsResponse> => {
+  if (mongoose.connection.readyState !== 1) {
+    logger.info(`MongoDB offline: returning resilient empty farm parcel set for user [${userId}]`);
+    return {
+      success: true,
+      parcels: [],
+      data: [],
+      totalAreaAcres: 0,
+      totalParcels: 0
+    };
+  }
+
+  // Admin users can inspect all parcels for platform governance & moderation; farmers view only their own
+  let parcels = role === 'admin'
+    ? await FarmParcel.find().sort({ createdAt: -1 })
+    : await FarmParcel.find({ farmerId: userId }).sort({ createdAt: -1 });
 
   // Auto-initialize default parcel if farmer profile has landHolding but no registered parcels
-  if (parcels.length === 0) {
+  if (parcels.length === 0 && role !== 'admin') {
     const user = await User.findById(userId);
     if (user) {
       const landHolding = typeof user.landHolding === 'number' && user.landHolding > 0
@@ -64,13 +79,22 @@ export const getFarmerParcels = async (userId: string): Promise<FarmParcelsRespo
  */
 export const getParcelById = async (
   parcelId: string,
-  userId: string
+  userId: string,
+  role?: string
 ): Promise<IFarmParcel> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database service is currently offline. Cannot retrieve farm parcel.');
+  }
+
   if (!parcelId.match(/^[0-9a-fA-F]{24}$/)) {
     throw ApiError.badRequest('Invalid farm parcel ID format');
   }
 
-  const parcel = await FarmParcel.findOne({ _id: parcelId, farmerId: userId });
+  const query = role === 'admin'
+    ? { _id: parcelId }
+    : { _id: parcelId, farmerId: userId };
+
+  const parcel = await FarmParcel.findOne(query);
   if (!parcel) {
     throw ApiError.notFound('Farm parcel not found or does not belong to authenticated farmer');
   }
@@ -85,6 +109,10 @@ export const createParcel = async (
   userId: string,
   dto: CreateFarmParcelDto
 ): Promise<IFarmParcel> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database service is currently offline. Farm parcel cannot be saved.');
+  }
+
   // Validate required fields
   if (!dto.name || dto.name.trim().length === 0) {
     throw ApiError.badRequest('Farm parcel name is required');
@@ -128,6 +156,10 @@ export const updateParcel = async (
   userId: string,
   dto: UpdateFarmParcelDto
 ): Promise<IFarmParcel> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database service is currently offline. Farm parcel cannot be updated.');
+  }
+
   if (!parcelId.match(/^[0-9a-fA-F]{24}$/)) {
     throw ApiError.badRequest('Invalid farm parcel ID format');
   }
@@ -164,6 +196,10 @@ export const deleteParcel = async (
   parcelId: string,
   userId: string
 ): Promise<{ success: boolean; message: string }> => {
+  if (mongoose.connection.readyState !== 1) {
+    throw ApiError.serviceUnavailable('Database service is currently offline. Farm parcel cannot be deleted.');
+  }
+
   if (!parcelId.match(/^[0-9a-fA-F]{24}$/)) {
     throw ApiError.badRequest('Invalid farm parcel ID format');
   }
