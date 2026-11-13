@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../common/Button';
 import { mockCurrentAdmin } from '../../data/mockData';
-import { env } from '../../config/env';
 
 /**
  * Dedicated Administrator Login Portal (/admin/login)
@@ -107,24 +106,22 @@ export const AdminLoginPage: React.FC = () => {
           </div>
         )}
 
-        {/* Development & Demo Admin Access */}
-        {(env.useMockData || env.isDemoMode) && env.environment !== 'production' && (
-          <div className="mb-5 p-3.5 rounded-xl bg-slate-900/80 border border-rose-900/40 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 block">
-                Offline Demo Admin Sandbox
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">No DB required</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleAdminDemoLogin}
-              className="w-full py-2 px-3 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/50 text-xs font-bold text-rose-200 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-rose-400" /> 1-Click Authenticate as Admin (Devraj Chauhan)
-            </button>
+        {/* 1-Click Admin Demo Access */}
+        <div className="mb-5 p-3.5 rounded-xl bg-slate-900/80 border border-rose-900/40 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 block">
+              ⚡ 1-Click Interactive Admin Demo
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">Instant Access</span>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={handleAdminDemoLogin}
+            className="w-full py-2 px-3 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/50 text-xs font-bold text-rose-200 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-rose-400" /> 1-Click Sign In as Administrator (Devraj Chauhan)
+          </button>
+        </div>
 
         {/* Main Admin Login Form */}
         <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
@@ -174,9 +171,9 @@ export const AdminLoginPage: React.FC = () => {
 
         <div className="mt-6 pt-4 border-t border-slate-700/60 text-center space-y-2">
           <p className="text-[11px] text-slate-400 font-medium">
-            Looking for Farmer or Buyer services?{' '}
+            Looking for Farmer Portal?{' '}
             <a href="/login" className="text-emerald-400 font-bold hover:underline">
-              Return to Public Portal
+              Go to Farmer Portal & Demo
             </a>
           </p>
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">

@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../common/Button';
 import { mockCurrentUser, mockCurrentAdmin } from '../../data/mockData';
-import { env } from '../../config/env';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -182,36 +181,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="p-6 overflow-y-auto">
-          {/* Quick Evaluator One-Click Demo Buttons */}
-          {(env.useMockData || env.isDemoMode) && env.environment !== 'production' && (
-            <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-br from-[#0B6B53]/[0.08] to-[#1B8F6B]/[0.04] border border-[#0B6B53]/15 space-y-2.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#0B6B53] block">
-                Quick Evaluator Demo Sandbox
+          {/* 1-Click Demo Buttons for Both Panels */}
+          <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-br from-[#0B6B53]/[0.08] via-slate-50 to-rose-50 border border-slate-200/90 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-800">
+                ⚡ 1-Click Interactive Demo
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  isLoading={loading}
-                  onClick={() => handleDemoLogin('farmer')}
-                  leftIcon={<User className="w-3.5 h-3.5" />}
-                  className="w-full text-[11px]"
-                >
-                  Farmer Demo
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  isLoading={loading}
-                  onClick={() => handleDemoLogin('admin')}
-                  leftIcon={<ShieldCheck className="w-3.5 h-3.5 text-rose-600" />}
-                  className="w-full text-[11px] border-rose-200 text-rose-700 hover:bg-rose-50"
-                >
-                  Admin Demo
-                </Button>
-              </div>
+              <span className="text-[10px] font-bold text-[#0B6B53]">Instant Sign In</span>
             </div>
-          )}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                isLoading={loading}
+                onClick={() => handleDemoLogin('farmer')}
+                leftIcon={<User className="w-3.5 h-3.5" />}
+                className="w-full text-[11px]"
+              >
+                Farmer Demo
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                isLoading={loading}
+                onClick={() => handleDemoLogin('admin')}
+                leftIcon={<ShieldCheck className="w-3.5 h-3.5 text-rose-600" />}
+                className="w-full text-[11px] border-rose-300 text-rose-700 hover:bg-rose-50"
+              >
+                Admin Demo
+              </Button>
+            </div>
+          </div>
 
           {mode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">

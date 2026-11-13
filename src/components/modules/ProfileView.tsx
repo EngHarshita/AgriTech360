@@ -86,7 +86,7 @@ export const ProfileView: React.FC = () => {
     setSoilType(mockCurrentUser.farmDetails?.soilType || 'Black');
     setIrrigationType(mockCurrentUser.farmDetails?.irrigationType || 'Drip');
     setKcc(mockCurrentUser.farmDetails?.kisanCreditCardNo || '');
-    showToast('Switched to default Capstone demo farmer profile', 'info');
+    showToast('Switched to default demo farmer profile', 'info');
   };
 
   if (!user) {

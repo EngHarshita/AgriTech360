@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
     }
 
     // Telemetry and request correlation
-    config.headers['X-Client-Version'] = '1.0.0-capstone';
+    config.headers['X-Client-Version'] = '1.0.0';
     config.headers['X-Request-Timestamp'] = new Date().toISOString();
 
     if (env.environment === 'development') {

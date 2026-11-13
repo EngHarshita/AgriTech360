@@ -1,8 +1,8 @@
 # 🌾 AgriTech360 — AI-Powered Smart Agriculture Platform
 
-> **Final Year B.Tech Capstone Project**  
+> **Enterprise Agricultural Advisory & Farm Management System**  
 > **Domain**: Artificial Intelligence, Smart Agriculture, and Fullstack Web Systems  
-> **Team**: Harshita (Frontend Lead) • Divyanshi (Backend Lead) • Khushi (Database & Testing) • Pragati (ML & Research)
+> **Engineering Team**: Harshita (Frontend Lead) • Divyanshi (Backend Lead) • Khushi (Database & Testing) • Pragati (ML & Research)
 
 ---
 
@@ -65,11 +65,11 @@ AgriTech360/
 ├── scripts/                 # Cross-platform runner and verification scripts
 │   ├── start_ml.cjs         # Cross-platform Python/uvicorn runner
 │   └── verify_system.cjs    # Live integration health test
-├── docs/                    # Complete Capstone Documentation
+├── docs/                    # Complete Platform Documentation
 │   ├── ARCHITECTURE.md      # Detailed system architecture and data flows
-│   ├── SRS_CAPSTONE_REPORT.md # Software Requirements Specification & Final Report
-│   ├── VIVA_PRESENTATION.md # 19-slide structured Viva defense deck
-│   └── DEMO_WALKTHROUGH_SCRIPT.md # Step-by-step practical presentation script
+│   ├── SRS_CAPSTONE_REPORT.md # Software Requirements Specification & Technical Report
+│   ├── VIVA_PRESENTATION.md # Technical presentation slides
+│   └── DEMO_WALKTHROUGH_SCRIPT.md # Step-by-step practical demonstration guide
 ├── docker-compose.yml       # Multi-service container orchestration
 └── package.json             # Root workspace scripts and developer tools
 ```
@@ -181,20 +181,20 @@ npm --prefix server run seed:schemes
 
 ---
 
-## 📚 Capstone Documentation
+## 📚 Platform Documentation
 
 - 📐 [System Architecture Documentation](./docs/ARCHITECTURE.md)
-- 📋 [SRS & Capstone Project Report](./docs/SRS_CAPSTONE_REPORT.md)
-- 🎯 [Viva Presentation Slides (19 Slides)](./docs/VIVA_PRESENTATION.md)
-- 🎬 [Demo Walkthrough Script](./docs/DEMO_WALKTHROUGH_SCRIPT.md)
+- 📋 [Software Requirements & Technical Specifications](./docs/SRS_CAPSTONE_REPORT.md)
+- 🎯 [Technical Presentation Slides](./docs/VIVA_PRESENTATION.md)
+- 🎬 [Interactive Walkthrough Guide](./docs/DEMO_WALKTHROUGH_SCRIPT.md)
 
 ---
 
-## 👥 Authors & Academic Credits
+## 👥 Engineering Team
 
 - **Harshita**: Frontend Architecture & UI/UX Design Lead
 - **Divyanshi**: Backend REST APIs, Resilience, & Microservices Lead
 - **Khushi**: Database Modeling, Testing, & Quality Assurance
 - **Pragati**: Machine Learning Models & Agronomic Research
 
-*Academic Session 2026–2027 • B.Tech Capstone Project*
+*AgriTech360 Platform • Production Release v1.0*

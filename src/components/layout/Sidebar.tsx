@@ -10,10 +10,13 @@ import {
   UserCircle, 
   HelpCircle,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
+import { mockCurrentUser, mockCurrentAdmin } from '../../data/mockData';
 
 
 export interface NavItem {
@@ -142,8 +145,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const { isHindi } = useLanguage();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -170,40 +174,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Navigation Items */}
         <div className="p-4 space-y-2 overflow-y-auto flex-1 scrollbar-thin">
-          {/* Admin Fast Cross-Panel Switcher */}
-          {user?.role === 'admin' && (
-            <div className="mb-3 p-1">
-              {location.pathname.startsWith('/admin') ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/farmer/dashboard')}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 transition-all cursor-pointer shadow-2xs group"
-                >
-                  <span className="flex items-center gap-2">
-                    <Sprout className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                    <span>View Farmer Panel</span>
-                  </span>
-                  <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200">
-                    Kisan
-                  </span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigate('/admin/dashboard')}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold hover:bg-rose-500/25 transition-all cursor-pointer shadow-2xs group"
-                >
-                  <span className="flex items-center gap-2">
-                    <LayoutDashboard className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
-                    <span>Back to Admin Panel</span>
-                  </span>
-                  <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-rose-400/20 text-rose-200">
-                    Admin
-                  </span>
-                </button>
-              )}
-            </div>
-          )}
+          {/* Panel Selector / Demo Tabs */}
+          <div className="mb-3 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] flex gap-1">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) {
+                  await login(mockCurrentUser.email, 'demo');
+                }
+                navigate('/farmer/dashboard');
+                showToast('Switched to Farmer Panel (किसान पोर्टल)', 'success');
+                onCloseMobile();
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                location.pathname.startsWith('/farmer')
+                  ? 'bg-[#1B8F6B] text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <Sprout className="w-3.5 h-3.5" />
+              <span>Farmer</span>
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user || user.role !== 'admin') {
+                  await login(mockCurrentAdmin.email, 'demo');
+                }
+                navigate('/admin/dashboard');
+                showToast('Switched to Admin Governance Panel', 'success');
+                onCloseMobile();
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                location.pathname.startsWith('/admin')
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin</span>
+            </button>
+          </div>
 
           <div className="px-3 pb-2 pt-1 text-[10px] font-black uppercase tracking-widest text-[#50CAA2]/70">
             {user?.role === 'admin' ? 'Administration Control' : 'Platform Modules'}
@@ -323,7 +334,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="flex items-center gap-1 hover:text-slate-200 transition-colors">
               <HelpCircle className="w-3.5 h-3.5 text-[#50CAA2]" /> Kisan Helpline: 1551
             </span>
-            <span className="text-[#8DCAB9]/70 text-[10px] font-mono">v1.0 Capstone</span>
+            <span className="text-[#8DCAB9]/70 text-[10px] font-mono">v1.0 Production</span>
           </div>
         </div>
       </aside>
