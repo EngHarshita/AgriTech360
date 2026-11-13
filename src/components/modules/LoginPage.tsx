@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../common/Button';
 import { mockCurrentUser, mockCurrentAdmin } from '../../data/mockData';
-import { env } from '../../config/env';
 
 export const LoginPage: React.FC = () => {
   const { user, isAuthenticated, login } = useAuth();
@@ -111,30 +110,48 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        {/* Demo Fast Login Pills */}
-        {(env.useMockData || env.isDemoMode) && env.environment !== 'production' && (
-          <div className="mb-5 p-3 rounded-xl bg-[#F0F9F6] border border-[#DCF1EB] space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#0B6B53] block">
-              1-Click Demo Sandbox Profiles
+        {/* 1-Click Interactive Demo Access for Both Panels */}
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-[#F0F9F6] via-slate-50 to-rose-50 border border-slate-200/90 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+              <span>⚡</span> 1-Click Interactive Demo
             </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('farmer')}
-                className="py-1.5 px-2 rounded-lg bg-white border border-[#0B6B53]/25 text-[11px] font-bold text-[#0B6B53] hover:bg-[#0B6B53] hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5" /> Farmer Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('admin')}
-                className="py-1.5 px-2 rounded-lg bg-white border border-rose-300 text-[11px] font-bold text-rose-700 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-rose-600" /> Admin Demo
-              </button>
-            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#0B6B53]">
+              Instant Access
+            </span>
           </div>
-        )}
+          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+            Choose a panel to immediately explore with pre-loaded real-time agricultural data:
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('farmer')}
+              className="p-2.5 rounded-xl bg-white border border-emerald-300 text-left hover:border-[#0B6B53] hover:shadow-sm transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5 font-bold text-xs text-[#0B6B53]">
+                <UserCheck className="w-4 h-4 text-[#0B6B53] group-hover:scale-110 transition-transform" />
+                <span>Farmer Demo</span>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1 leading-tight">
+                Crop Advisory AI, Mandi Rates & Weather Radar
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('admin')}
+              className="p-2.5 rounded-xl bg-white border border-rose-300 text-left hover:border-rose-600 hover:shadow-sm transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5 font-bold text-xs text-rose-700">
+                <ShieldCheck className="w-4 h-4 text-rose-600 group-hover:scale-110 transition-transform" />
+                <span>Admin Demo</span>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1 leading-tight">
+                User Moderation, System Health & Audit Logs
+              </p>
+            </button>
+          </div>
+        </div>
 
         {/* Main Login Form */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">

@@ -137,9 +137,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 group-hover:text-[#0B6B53] transition-colors">
                     AgriTech<span className="text-[#0B6B53]">360</span>
                   </span>
-                  <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#E8F5E9] text-[#0B6B53] border border-[#C8E6C9]">
-                    CAPSTONE
-                  </span>
                 </div>
                 <p className="text-[11px] font-medium text-slate-500 hidden sm:block -mt-0.5">
                   {t('common.tagline')}
@@ -341,30 +338,50 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Admin Fast Panel Switcher (Visible in Header when logged in as Admin) */}
-            {isAuthenticated && user?.role === 'admin' && (
-              location.pathname.startsWith('/admin') ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/farmer/dashboard')}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
-                  title="Switch to Farmer Panel view"
-                >
-                  <Sprout className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Farmer Panel</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigate('/admin/dashboard')}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold hover:bg-rose-100 transition-all cursor-pointer shadow-2xs"
-                  title="Return to Admin Governance Panel"
-                >
-                  <Shield className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Admin Control</span>
-                </button>
-              )
-            )}
+            {/* Dual Panel Switcher / Quick Demo Controls */}
+            <div className="flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200/90 shadow-2xs gap-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    await login(mockCurrentUser.email, 'demo');
+                  }
+                  navigate('/farmer/dashboard');
+                  showToast('Switched to Farmer Panel (किसान पोर्टल)', 'success');
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  location.pathname.startsWith('/farmer')
+                    ? 'bg-[#0B6B53] text-white shadow-sm'
+                    : 'text-slate-700 hover:text-[#0B6B53] hover:bg-white'
+                }`}
+                title="Open Farmer Panel (Live Demo)"
+              >
+                <Sprout className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Farmer Panel</span>
+                <span className="sm:hidden">Farmer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!isAuthenticated || user?.role !== 'admin') {
+                    await login(mockCurrentAdmin.email, 'demo');
+                  }
+                  navigate('/admin/dashboard');
+                  showToast('Switched to Admin Governance Panel', 'success');
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  location.pathname.startsWith('/admin')
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'text-slate-700 hover:text-rose-700 hover:bg-white'
+                }`}
+                title="Open Admin Governance Panel (Live Demo)"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Admin Panel</span>
+                <span className="sm:hidden">Admin</span>
+              </button>
+            </div>
 
             {/* User Profile or Login Button */}
             {isAuthenticated && user ? (
