@@ -10,7 +10,9 @@ import {
   ChevronLeft,
   Layers,
   Check,
-  RotateCcw
+  RotateCcw,
+  CloudRain,
+  Thermometer
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -22,7 +24,7 @@ import type { CropRecommendation, SoilParams } from '../../types';
 import { Card, CardHeader, CardContent } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
-import { mockCropRecommendations } from '../../data/mockData';
+import { predictTopCropsFromDataset } from '../../data/cropProfiles';
 
 const DEFAULT_PARAMS: SoilParams = {
   nitrogen: 92,
@@ -90,6 +92,15 @@ export const CropRecommendationView: React.FC = () => {
       return;
     }
 
+    if (params.temperature < -10 || params.temperature > 60) {
+      setError(isHindi ? 'तापमान -10°C से 60°C के बीच होना चाहिए।' : 'Temperature must be between -10°C and 60°C.');
+      return;
+    }
+    if (params.rainfall < 0 || params.rainfall > 3000) {
+      setError(isHindi ? 'वर्षा 0 से 3000 मिमी के बीच होनी चाहिए।' : 'Rainfall must be between 0 and 3000 mm.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setIsFallback(false);
@@ -117,12 +128,7 @@ export const CropRecommendationView: React.FC = () => {
       console.error('Recommendation API error, using ICAR fallback:', err);
       clearInterval(stepInterval);
       setIsFallback(true);
-      const fallbackList = mockCropRecommendations.map((c) => {
-        let delta = 0;
-        if (params.nitrogen > 100 && c.id === 'crop_wheat') delta += 3;
-        if (params.moisture < 40 && c.id === 'crop_chana') delta += 5;
-        return { ...c, suitabilityScore: Math.min(99, Math.max(65, c.suitabilityScore + delta)) };
-      });
+      const fallbackList = predictTopCropsFromDataset(params, 3);
       setRecommendations(fallbackList);
       if (fallbackList.length > 0) setSelectedCrop(fallbackList[0]);
 
@@ -390,7 +396,7 @@ export const CropRecommendationView: React.FC = () => {
 
               <div>
                 <label htmlFor="soil-moisture" className="block text-sm font-bold text-slate-800 mb-1">
-                  {isHindi ? 'मिट्टी में नमी (%)' : 'Soil Moisture (%)'}
+                  {isHindi ? 'हवा/मिट्टी में नमी व आर्द्रता (%)' : 'Moisture & Humidity (%)'}
                 </label>
                 <div className="relative">
                   <input
@@ -401,13 +407,177 @@ export const CropRecommendationView: React.FC = () => {
                     value={params.moisture}
                     onChange={(e) => setParams({ ...params, moisture: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl border border-black/[0.1] text-sm font-bold text-slate-900 focus:ring-4 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs"
-                    placeholder="35 - 45%"
+                    placeholder="35 - 85%"
                   />
                   <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">%</span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  {isHindi ? 'मिट्टी में मौजूद गीलापन या नमी प्रतिशत।' : 'Percentage of volumetric water content.'}
+                  {isHindi ? 'वातावरण की सापेक्ष आर्द्रता व मिट्टी की नमी।' : 'Relative humidity and volumetric water level.'}
                 </p>
+              </div>
+            </div>
+
+            {/* Climate & Weather Parameters: Temperature & Rainfall */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label htmlFor="param-temperature" className="block text-sm font-bold text-slate-800 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Thermometer className="w-4 h-4 text-emerald-600" />
+                    <span>{isHindi ? 'औसत तापमान (°C)' : 'Ambient Temperature (°C)'}</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    {isHindi ? 'मौसम कारक' : 'Climate factor'}
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="param-temperature"
+                    type="number"
+                    step="0.5"
+                    min="-10"
+                    max="60"
+                    value={params.temperature}
+                    onChange={(e) => setParams({ ...params, temperature: Number(e.target.value) })}
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.1] text-sm font-bold text-slate-900 focus:ring-4 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs"
+                    placeholder="24 - 28°C"
+                  />
+                  <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">°C</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  {isHindi ? 'फसल की बढ़वार के लिए औसत तापमान।' : 'Average growing season ambient temperature.'}
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="param-rainfall" className="block text-sm font-bold text-slate-800 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <CloudRain className="w-4 h-4 text-sky-600" />
+                    <span>{isHindi ? 'अनुमानित वर्षा / पानी (mm)' : 'Seasonal Rainfall (mm)'}</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+                    {isHindi ? 'जल उपलब्धता' : 'Water input'}
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="param-rainfall"
+                    type="number"
+                    min="0"
+                    max="3000"
+                    value={params.rainfall}
+                    onChange={(e) => setParams({ ...params, rainfall: Number(e.target.value) })}
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.1] text-sm font-bold text-slate-900 focus:ring-4 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs"
+                    placeholder="80 - 240 mm"
+                  />
+                  <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">mm</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  {isHindi ? 'मौसम की कुल अनुमानित वर्षा अथवा सिंचाई जल।' : 'Expected seasonal rainfall or total irrigation volume.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Agro-Climate Benchmark Presets */}
+            <div className="pt-3 border-t border-slate-100">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-2">
+                {isHindi ? '⚡ 1-क्लिक परीक्षण प्रोफाइल (ICAR बेंचमार्क):' : '⚡ 1-Click Agro-Climate Presets (ICAR Datasets):'}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParams({
+                      soilType: 'Alluvial',
+                      phLevel: 6.4,
+                      moisture: 82,
+                      temperature: 24,
+                      rainfall: 236,
+                      nitrogen: 80,
+                      phosphorus: 48,
+                      potassium: 40
+                    });
+                    showToast(isHindi ? 'धान / चावल (Paddy) अनुकूल डेटा लोड हुआ' : 'Loaded Rice / Paddy agro-climatic profile', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+                >
+                  🌾 {isHindi ? 'धान (Rice)' : 'Rice / Paddy'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParams({
+                      soilType: 'Black',
+                      phLevel: 6.9,
+                      moisture: 80,
+                      temperature: 24,
+                      rainfall: 80,
+                      nitrogen: 118,
+                      phosphorus: 46,
+                      potassium: 20
+                    });
+                    showToast(isHindi ? 'कपास (Cotton) अनुकूल डेटा लोड हुआ' : 'Loaded Cotton agro-climatic profile', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
+                >
+                  ☁️ {isHindi ? 'कपास (Cotton)' : 'Cotton'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParams({
+                      soilType: 'Loamy',
+                      phLevel: 7.3,
+                      moisture: 17,
+                      temperature: 19,
+                      rainfall: 80,
+                      nitrogen: 40,
+                      phosphorus: 68,
+                      potassium: 80
+                    });
+                    showToast(isHindi ? 'चना (Chickpea) अनुकूल डेटा लोड हुआ' : 'Loaded Chickpea profile', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                >
+                  🫘 {isHindi ? 'चना (Chickpea)' : 'Chickpea'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParams({
+                      soilType: 'Loamy',
+                      phLevel: 5.9,
+                      moisture: 92,
+                      temperature: 23,
+                      rainfall: 113,
+                      nitrogen: 21,
+                      phosphorus: 134,
+                      potassium: 200
+                    });
+                    showToast(isHindi ? 'सेब (Apple) पर्वतीय डेटा लोड हुआ' : 'Loaded Apple orchard profile', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
+                >
+                  🍎 {isHindi ? 'सेब (Apple)' : 'Apple'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParams({
+                      soilType: 'Black',
+                      phLevel: 6.8,
+                      moisture: 59,
+                      temperature: 26,
+                      rainfall: 158,
+                      nitrogen: 101,
+                      phosphorus: 29,
+                      potassium: 30
+                    });
+                    showToast(isHindi ? 'कॉफ़ी (Coffee) बागानी डेटा लोड हुआ' : 'Loaded Coffee plantation profile', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors cursor-pointer"
+                >
+                  ☕ {isHindi ? 'कॉफ़ी (Coffee)' : 'Coffee'}
+                </button>
               </div>
             </div>
 
@@ -484,7 +654,7 @@ export const CropRecommendationView: React.FC = () => {
                   id="param-p"
                   type="number"
                   min="0"
-                  max="150"
+                  max="300"
                   value={params.phosphorus}
                   onChange={(e) => setParams({ ...params, phosphorus: Number(e.target.value) })}
                   className="w-full px-4 py-3 rounded-xl border border-black/[0.1] text-base font-bold text-slate-900 focus:ring-4 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs"
@@ -511,7 +681,7 @@ export const CropRecommendationView: React.FC = () => {
                   id="param-k"
                   type="number"
                   min="0"
-                  max="200"
+                  max="300"
                   value={params.potassium}
                   onChange={(e) => setParams({ ...params, potassium: Number(e.target.value) })}
                   className="w-full px-4 py-3 rounded-xl border border-black/[0.1] text-base font-bold text-slate-900 focus:ring-4 focus:ring-[#0B6B53]/20 focus:border-[#0B6B53] outline-none bg-white shadow-2xs"
