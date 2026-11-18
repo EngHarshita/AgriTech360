@@ -43,13 +43,14 @@ export const validateCropInput = (body: CropRecommendationInput): NormalizedCrop
     return num;
   };
 
-  const rawN = body.N !== undefined ? body.N : body.nitrogen;
-  const rawP = body.P !== undefined ? body.P : body.phosphorus;
-  const rawK = body.K !== undefined ? body.K : body.potassium;
-  const rawTemp = body.temperature;
-  const rawHumidity = body.humidity !== undefined ? body.humidity : body.moisture;
-  const rawPh = body.ph !== undefined ? body.ph : body.phLevel;
-  const rawRainfall = body.rainfall;
+  const raw = body as unknown as Record<string, unknown>;
+  const rawN = raw.N !== undefined ? raw.N : (raw.n !== undefined ? raw.n : raw.nitrogen);
+  const rawP = raw.P !== undefined ? raw.P : (raw.p !== undefined ? raw.p : raw.phosphorus);
+  const rawK = raw.K !== undefined ? raw.K : (raw.k !== undefined ? raw.k : raw.potassium);
+  const rawTemp = raw.temperature !== undefined ? raw.temperature : raw.temp;
+  const rawHumidity = raw.humidity !== undefined ? raw.humidity : raw.moisture;
+  const rawPh = raw.ph !== undefined ? raw.ph : (raw.pH !== undefined ? raw.pH : raw.phLevel);
+  const rawRainfall = raw.rainfall !== undefined ? raw.rainfall : raw.rain;
 
   const N = parseNumericField(rawN, 'nitrogen (or N)', 0, 300, 'kg/ha');
   const P = parseNumericField(rawP, 'phosphorus (or P)', 0, 300, 'kg/ha');

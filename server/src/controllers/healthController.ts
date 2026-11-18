@@ -34,5 +34,5 @@ export const getHealth = asyncHandler(async (_req: Request, res: Response): Prom
     }
   };
 
-  sendSuccess(res, 'AgriTech360 backend service is operational', healthData, isHealthy ? 200 : 503);
+  sendSuccess(res, 'AgriTech360 backend service is operational', healthData, 200);
 });

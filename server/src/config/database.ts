@@ -32,6 +32,10 @@ export const configureDnsForAtlas = (): void => {
 // Execute at module load time so any early queries benefit from reliable DNS
 configureDnsForAtlas();
 
+// Disable buffering so queries never hang when database connection is down or degraded
+mongoose.set('bufferCommands', false);
+mongoose.set('bufferTimeoutMS', 2500);
+
 /**
  * Connect to MongoDB Atlas instance
  */
