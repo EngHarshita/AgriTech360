@@ -66,13 +66,97 @@ AgriTech360/
 │   ├── start_ml.cjs         # Cross-platform Python/uvicorn runner
 │   └── verify_system.cjs    # Live integration health test
 ├── docs/                    # Complete Platform Documentation
+│   ├── ML_MODEL_AND_DATASET.md # Machine Learning concepts, Random Forest, dataset, & evaluation
+│   ├── VIVA_QUESTIONS_AND_ANSWERS.md # Complete beginner-friendly viva questions & defense guide
 │   ├── ARCHITECTURE.md      # Detailed system architecture and data flows
 │   ├── SRS_CAPSTONE_REPORT.md # Software Requirements Specification & Technical Report
-│   ├── VIVA_PRESENTATION.md # Technical presentation slides
-│   └── DEMO_WALKTHROUGH_SCRIPT.md # Step-by-step practical demonstration guide
+│   ├── VIVA_PRESENTATION.md # Technical presentation slide deck
+│   ├── DEMO_WALKTHROUGH_SCRIPT.md # Step-by-step practical demonstration guide
+│   ├── ADMIN_PANEL_IMPLEMENTATION.md # Admin governance, user management, & audit logs
+│   └── PHASE_3_5_FARMER_UX.md # Farmer UX, accessibility, & bilingual workflows
 ├── docker-compose.yml       # Multi-service container orchestration
 └── package.json             # Root workspace scripts and developer tools
 ```
+
+---
+
+## 🧠 Machine Learning Engine & Crop Recommendation Architecture
+
+AgriTech360 deploys an ensemble **Random Forest Classifier** served via a dedicated Python FastAPI microservice. The model predicts the optimal crop variety based on 7 continuous chemical and agro-climatic parameters.
+
+### 📊 Dataset Specifications
+- **Source**: `ml-service/data/Crop_recommendation.csv`
+- **Volume**: **2,200 records**, **8 columns**, **0 missing values**, **0 duplicate entries**.
+- **Classes**: Exactly **22 crop classes**, balanced at **100 samples per class** across Cereals, Pulses, Fruits, Commercial/Fibre crops, and Beverages.
+- **Input Features**: Nitrogen ($N$), Phosphorus ($P$), Potassium ($K$), Ambient Temperature ($^{\circ}\text{C}$), Relative Humidity ($\%$), Soil pH ($0\text{--}14$), and Seasonal Rainfall ($\text{mm}$).
+
+### 🎯 99.55% Evaluation Benchmark
+Evaluated on a **Stratified 80/20 Holdout Test Split** ($N = 440$ unseen test instances):
+- **Accuracy**: **99.55%** (438 out of 440 predictions correct).
+- **Macro Precision**: **0.996** | **Macro Recall**: **0.995** | **Macro F1-Score**: **0.995**
+- **Misclassifications**: Exactly 2 samples in the holdout split:
+  1. $1\times$ `blackgram` classified as `maize` (marginal overlapping N/rainfall boundaries).
+  2. $1\times$ `rice` classified as `jute` (shared high-humidity $>80\%$ and high-rainfall $>180\text{ mm}$ conditions).
+
+### 🔍 Feature Importance Ranking (Gini Impurity Reduction)
+```
+1. Rainfall        ████████████████████████ 23.0%
+2. Humidity        ███████████████████████  22.4%
+3. Potassium (K)   ██████████████████       17.5%
+4. Phosphorus (P)  ███████████████          15.1%
+5. Nitrogen (N)    ██████████               9.6%
+6. Temperature     ███████                  7.4%
+7. Soil pH         █████                    5.0%
+```
+> **Key Agronomic Insight**: Moisture parameters (Rainfall + Relative Humidity) account for **45.4%** of the total decision weight, separating wetland/tropical crops from dryland/arid crops.
+
+### 🔄 End-to-End Recommendation Workflow
+```
+[Farmer UI] ──(N, P, K, Temp, Humidity, pH, Rainfall)──► [Express Gateway :5000]
+                                                                  │
+                                                          (Sanitized Payload)
+                                                                  ▼
+[Enriched Result + Provenance] ◄── [ICAR Database] ◄── [FastAPI Microservice :8000]
+                                                           (Random Forest Model)
+```
+1. **Input Collection**: Farmer inputs soil chemistry and climate parameters or selects a 1-click ICAR preset (Rice, Cotton, Chickpea, Apple, Coffee).
+2. **Gateway Normalization**: Express backend validates boundaries and handles multi-casing aliases (`N/n`, `P/p`, `K/k`, `temp`, `humidity`, `ph`, `rainfall`).
+3. **Model Inference**: FastAPI calls `predict_proba` on the serialized Random Forest model to compute posterior probabilities for all 22 classes.
+4. **Agronomic Enrichment**: Winning crop is enriched with ICAR data: sowing windows, expected yield per acre, cultivation cost, gross revenue, net profit, and tailored split fertilizer schedules.
+
+---
+
+## 🐛 The Repeated Prediction Bug & Root-Cause Resolution
+
+### The Issue
+In previous versions, entering different soil values in the UI always recommended **"Wheat"**, making recommendations appear static or mocked.
+
+### Root Causes Identified
+1. **Form Omissions**: `CropRecommendationView.tsx` only gathered $N, P, K, \text{pH}$, hardcoding Temperature and Rainfall to static constants ($25^{\circ}\text{C}$ and $100\text{ mm}$). Because moisture governs 45.4% of the model's decisions, holding them constant severely constrained variance.
+2. **Hardcoded Fallback Constant**: The offline client fallback in `src/api/agriService.ts` was returning a static object initialized to `"Wheat"`.
+3. **Gateway Case Sensitivity**: Express expected uppercase keys (`N, P, K`). When the frontend sent lowercase keys, values defaulted to `undefined`.
+
+### Engineering Fix Applied
+- **Statistical Centroids (`src/data/cropProfiles.ts`)**: Extracted the empirical mean ($\mu$) and standard deviation ($\sigma$) for all 22 crops from `Crop_recommendation.csv`. Implemented `predictTopCropsFromDataset()` computing normalized Euclidean distances:
+  $$D(C_k) = \sqrt{\sum_{i=1}^{7} \left(\frac{x_i - \mu_{k,i}}{\sigma_{k,i}}\right)^2}$$
+- **Full Climate Sliders**: Added numeric inputs for Ambient Temperature ($^{\circ}\text{C}$) and Seasonal Rainfall ($\text{mm}$) to the UI.
+- **Multi-Casing Validation**: Updated `server/src/services/cropService.ts` to accept uppercase, lowercase, and full names (`N`/`n`/`nitrogen`, etc.).
+
+---
+
+## 📈 APMC Mandi Price Monitoring & MSP Calculator
+
+- **Data Source**: Modeled on the official **Agmarknet** portal of the **Directorate of Marketing & Inspection (DMI), Ministry of Agriculture & Farmers Welfare** (`data.gov.in`).
+- **Coverage**: **88 verified APMC mandi records** across Madhya Pradesh, Punjab, Maharashtra, Uttar Pradesh, Rajasthan, and Gujarat.
+- **Metrics Tracked**: Daily Modal Price ($\text{₹/Quintal}$), Minimum/Maximum price range, price movement percentage ($\pm\%$), and official Government Minimum Support Price (MSP) benchmarks.
+- **Harvest Revenue Calculator**: Farmers enter estimated harvest quantity ($Q$ Quintals) to compute projected market revenue compared directly against the government MSP safety net.
+
+---
+
+## 🏛️ Government Schemes & Automated Eligibility Engine
+
+- **Catalog**: **26 comprehensive Central & State schemes** indexed at `server/src/data/seedSchemesData.ts` (e.g. PM-KISAN, PMFBY, PMKSY, Soil Health Card, SMAM 40–50% farm mechanization subsidy, Kisan Credit Card).
+- **Rule-Based Eligibility Engine**: Automatically cross-references the farmer's registered profile (landholding acres, state of residence, irrigation method, soil type) against official scheme guidelines, outputting an eligibility badge (`Eligible`, `Partially Eligible`, `Ineligible`) and required documentation checklists.
 
 ---
 
@@ -183,10 +267,14 @@ npm --prefix server run seed:schemes
 
 ## 📚 Platform Documentation
 
-- 📐 [System Architecture Documentation](./docs/ARCHITECTURE.md)
+- 🧠 [Machine Learning Model, Dataset & 99.55% Evaluation Deep-Dive](./docs/ML_MODEL_AND_DATASET.md)
+- 🎓 [Complete Beginner-Friendly Viva Q&A & Examiner Defense Guide](./docs/VIVA_QUESTIONS_AND_ANSWERS.md)
+- 📐 [System Architecture Documentation & Decoupled Data Flows](./docs/ARCHITECTURE.md)
+- 🎯 [Technical Presentation Slide Deck](./docs/VIVA_PRESENTATION.md)
 - 📋 [Software Requirements & Technical Specifications](./docs/SRS_CAPSTONE_REPORT.md)
-- 🎯 [Technical Presentation Slides](./docs/VIVA_PRESENTATION.md)
 - 🎬 [Interactive Walkthrough Guide](./docs/DEMO_WALKTHROUGH_SCRIPT.md)
+- 🛡️ [Administrator Governance Panel Implementation](./docs/ADMIN_PANEL_IMPLEMENTATION.md)
+- 🌾 [Farmer UX, Accessibility & Bilingual Workflows](./docs/PHASE_3_5_FARMER_UX.md)
 
 ---
 

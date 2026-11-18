@@ -94,6 +94,20 @@
 
 ---
 
+### Slide 9B: Repeated Prediction Bug & Engineering Solution
+- **The Bug**: Inputting different NPK/soil parameters previously always recommended "Wheat".
+- **Root Causes**:
+  1. Frontend form omitted Temperature & Rainfall (defaulting to static 25°C / 100mm constants).
+  2. Frontend mock fallback had a hardcoded default returning "Wheat" when offline.
+  3. Express validator was strictly case-sensitive (`N` vs `n`).
+- **The Solution**:
+  - Computed 22 empirical crop centroids ($\mu, \sigma$) directly from `Crop_recommendation.csv` in `src/data/cropProfiles.ts`.
+  - Implemented normalized Euclidean distance metric for authentic offline fallback.
+  - Added full Temperature & Rainfall sliders + 5 one-click ICAR presets to UI.
+  - Added tolerant multi-casing parameter validation in Express.
+
+---
+
 ### Slide 10: Weather Intelligence & Spray Advisory
 - **Agro-Meteorological Features**:
   - Current Temperature, Relative Humidity, Soil Temperature, Evapotranspiration.
@@ -166,10 +180,13 @@
   - *Answer*: The system features dual-mode architecture (`VITE_USE_MOCK_DATA`) and the backend implements non-blocking degraded fallbacks, ensuring farmers never face a broken screen.
 - **Q3: How was 99.55% accuracy validated?**
   - *Answer*: On a 20% stratified holdout test split ($N=440$ samples) that the model never saw during training, verified in `models/model_metadata.json`.
+- **Q4: What caused the repeated "Wheat" prediction bug and how was it solved?**
+  - *Answer*: Form omissions for temperature/rainfall and static fallback defaults. Solved by calculating 22 crop centroids from `Crop_recommendation.csv` and restoring full 7-parameter telemetry in both UI and API.
+- **Detailed Reference**: See [Complete Viva Q&A Guide](./VIVA_QUESTIONS_AND_ANSWERS.md) and [ML Model & Dataset Architecture](./ML_MODEL_AND_DATASET.md).
 
 ---
 
 ### Slide 19: Conclusion & Acknowledgments
-- **Summary**: AgriTech360 is a complete, tested, production-ready capstone platform addressing real-world agrarian challenges in India.
+- **Summary**: AgriTech360 is a complete, tested, production-ready platform addressing real-world agrarian challenges in India.
 - **Special Thanks**: Project guide, department faculty, and external evaluation committee.
 - **Thank you! We welcome your questions.**
